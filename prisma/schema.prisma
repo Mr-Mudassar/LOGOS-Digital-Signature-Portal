@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  name              String?
+  password          String
+  emailVerified     DateTime?
+  image             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  // Relations
+  contractsInitiated Contract[] @relation("ContractInitiator")
+  contractsReceived  Contract[] @relation("ContractReceiver")
+  signatures         Signature[]
+  
+  @@map("users")
+}
+
+enum ContractStatus {
+  DRAFT
+  AWAITING_SIGNATURE
+  COMPLETED
+}
+
+model Contract {
+  id                    String         @id @default(cuid())
+  title                 String
+  status                ContractStatus @default(DRAFT)
+  
+  // Document and AI generation
+  referenceDocumentUrl  String?
+  referenceDocumentName String?
+  userContext           String?        @db.Text
+  aiGeneratedContent    String?        @db.Text
+  finalDocumentUrl      String?
+  
+  // Parties
+  initiatorId           String
+  initiator             User           @relation("ContractInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  initiatorName         String
+  initiatorEmail        String?
+  
+  receiverId            String?
+  receiver              User?          @relation("ContractReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  receiverName          String
+  receiverEmail         String
+  
+  // Signing
+  signingLink           String?        @unique
+  signingLinkExpiresAt  DateTime?
+  
+  // Timestamps
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  completedAt           DateTime?
+  
+  // Relations
+  signatures            Signature[]
+  
+  @@map("contracts")
+  @@index([initiatorId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+enum SignatureType {
+  INITIATOR
+  RECEIVER
+}
+
+model Signature {
+  id            String        @id @default(cuid())
+  contractId    String
+  contract      Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type          SignatureType
+  signatureData String        @db.Text // Base64 or signature image data
+  signedAt      DateTime      @default(now())
+  ipAddress     String?
+  
+  @@map("signatures")
+  @@index([contractId])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("password_reset_tokens")
+  @@index([email])
+}
