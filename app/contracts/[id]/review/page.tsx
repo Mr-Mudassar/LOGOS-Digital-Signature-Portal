@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import axios from 'axios'
 import SignatureModal from '@/components/SignatureModal'
+import ConfirmationModal from '@/components/ConfirmationModal'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { ArrowLeft, Edit, FileSignature, Send } from 'lucide-react'
 
 interface Contract {
@@ -31,6 +33,7 @@ export default function ContractReviewPage() {
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [signing, setSigning] = useState(false)
   const [sending, setSending] = useState(false)
+  const [showSendConfirm, setShowSendConfirm] = useState(false)
 
   useEffect(() => {
     fetchContract()
@@ -93,15 +96,15 @@ export default function ContractReviewPage() {
     }
   }
 
-  const handleSendToReceiver = async () => {
-    if (!confirm(`Send this contract to ${contract?.receiverEmail}?`)) {
-      return
-    }
+  const handleSendClick = () => {
+    setShowSendConfirm(true)
+  }
 
+  const handleSendToReceiver = async () => {
     setSending(true)
     try {
       await axios.post(`/api/contracts/${contractId}/send`)
-      alert('Contract sent successfully!')
+      setShowSendConfirm(false)
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to send contract')
@@ -163,28 +166,35 @@ export default function ContractReviewPage() {
             <div className="flex gap-3">
               {!isEditing && !hasInitiatorSigned && (
                 <>
-                  <button onClick={handleEdit} className="btn-secondary flex items-center gap-2">
+                  <LoadingButton
+                    onClick={handleEdit}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
                     <Edit className="w-4 h-4" />
                     Edit Content
-                  </button>
-                  <button
+                  </LoadingButton>
+                  <LoadingButton
                     onClick={handleSignContract}
-                    className="btn-primary flex items-center gap-2"
+                    loading={signing}
+                    loadingText="Signing..."
+                    className="flex items-center gap-2"
                   >
                     <FileSignature className="w-4 h-4" />
                     Sign Contract
-                  </button>
+                  </LoadingButton>
                 </>
               )}
               {hasInitiatorSigned && contract.status === 'DRAFT' && (
-                <button
-                  onClick={handleSendToReceiver}
-                  disabled={sending}
-                  className="btn-primary flex items-center gap-2"
+                <LoadingButton
+                  onClick={handleSendClick}
+                  loading={sending}
+                  loadingText="Sending..."
+                  className="flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
-                  {sending ? 'Sending...' : 'Send to Second Party'}
-                </button>
+                  Send to Second Party
+                </LoadingButton>
               )}
             </div>
           </div>
@@ -232,12 +242,12 @@ export default function ContractReviewPage() {
                   placeholder="Contract content..."
                 />
                 <div className="flex justify-end gap-3 mt-4">
-                  <button onClick={handleCancelEdit} className="btn-secondary">
+                  <LoadingButton onClick={handleCancelEdit} variant="outline">
                     Cancel
-                  </button>
-                  <button onClick={handleSaveEdit} disabled={saving} className="btn-primary">
-                    {saving ? 'Saving...' : 'Save Changes'}
-                  </button>
+                  </LoadingButton>
+                  <LoadingButton onClick={handleSaveEdit} loading={saving} loadingText="Saving...">
+                    Save Changes
+                  </LoadingButton>
                 </div>
               </div>
             ) : (
@@ -257,6 +267,20 @@ export default function ContractReviewPage() {
         onClose={() => setShowSignatureModal(false)}
         onConfirm={handleSignatureConfirm}
         signerName={contract.initiatorName}
+        loading={signing}
+      />
+
+      {/* Send Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showSendConfirm}
+        onClose={() => setShowSendConfirm(false)}
+        onConfirm={handleSendToReceiver}
+        title="Send Contract"
+        description={`Send this contract to ${contract.receiverEmail} for their signature?`}
+        confirmText="Send"
+        cancelText="Cancel"
+        variant="info"
+        loading={sending}
       />
     </div>
   )

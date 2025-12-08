@@ -4,6 +4,7 @@ import { formatDateTime } from '@/lib/utils'
 import { Eye, Trash2, Send, FileSignature } from 'lucide-react'
 import { useState } from 'react'
 import axios from 'axios'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface ContractCardProps {
   contract: any
@@ -13,29 +14,33 @@ interface ContractCardProps {
 
 export default function ContractCard({ contract, onUpdate, onOpenContract }: ContractCardProps) {
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!confirm('Are you sure you want to delete this contract?')) return
-
+  const handleDelete = async () => {
     setDeleting(true)
+    setDeleteError('')
     try {
       await axios.delete(`/api/contracts/${contract.id}`)
+      setShowDeleteConfirm(false)
       onUpdate()
     } catch (error) {
       console.error('Error deleting contract:', error)
-      alert('Failed to delete contract')
+      setDeleteError('Failed to delete contract. Please try again.')
     } finally {
       setDeleting(false)
     }
   }
 
-  const handleAction = (e: React.MouseEvent, action: 'view' | 'delete' | 'send' | 'sign') => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDeleteConfirm(true)
+  }
+
+  const handleAction = (e: React.MouseEvent, action: 'view' | 'send' | 'sign') => {
     e.stopPropagation()
 
-    if (action === 'delete') {
-      handleDelete(e)
-    } else if (action === 'view') {
+    if (action === 'view') {
       onOpenContract(contract.id)
     } else if (action === 'send' || action === 'sign') {
       // Open contract to perform action
@@ -136,7 +141,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
 
         {canDelete && (
           <button
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={deleting}
             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
             title="Delete Contract"
@@ -145,6 +150,25 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
           </button>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete Contract"
+        description={`Are you sure you want to delete "${contract.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+      />
+
+      {deleteError && (
+        <div className="col-span-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {deleteError}
+        </div>
+      )}
     </div>
   )
 }

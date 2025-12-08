@@ -38,7 +38,19 @@ export default function DashboardPage() {
       setLoading(true)
       const url = filter === 'all' ? '/api/contracts' : `/api/contracts?status=${filter}`
       const response = await axios.get(url)
-      setContracts(response.data.contracts)
+      let fetchedContracts = response.data.contracts
+
+      // Filter for pending-to-sign: contracts that need the current user's signature
+      if (filter === 'pending-to-sign') {
+        fetchedContracts = fetchedContracts.filter(
+          (contract: any) =>
+            contract.status === 'AWAITING_SIGNATURE' &&
+            contract.receiverId === session?.user?.id &&
+            !contract.signatures?.some((sig: any) => sig.type === 'RECEIVER')
+        )
+      }
+
+      setContracts(fetchedContracts)
     } catch (error) {
       console.error('Error fetching contracts:', error)
     } finally {
@@ -78,9 +90,10 @@ export default function DashboardPage() {
 
   const stats = {
     pending: contracts.filter((c) => c.status === 'DRAFT').length,
+    awaitingSignature: contracts.filter(
+      (c) => c.status === 'AWAITING_SIGNATURE' && c.receiverId === session?.user?.id
+    ).length,
     completed: contracts.filter((c) => c.status === 'COMPLETED').length,
-    verified: contracts.filter((c) => c.status === 'COMPLETED').length,
-    suspicious: 0,
   }
 
   return (
@@ -93,10 +106,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <span className="text-gray-400">📊</span> Dashboard
+                <span className="text-gray-400">📊</span> My Contracts
               </h1>
               <p className="text-gray-600 mt-1">
-                Overview of signatures, contracts and verification activity across Lagos State.
+                Manage your contracts, signatures, and pending documents.
               </p>
             </div>
             <button
@@ -110,29 +123,24 @@ export default function DashboardPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatsCard title="DRAFTS" value={stats.pending} change="+3 today" variant="warning" />
             <StatsCard
-              title="PENDING SIGNATURES"
-              value={stats.pending}
-              change="+3 today"
-              variant="warning"
+              title="PENDING SIGNATURE"
+              value={stats.awaitingSignature}
+              change="Needs your action"
+              variant="info"
             />
             <StatsCard
-              title="COMPLETED CONTRACTS (30D)"
+              title="COMPLETED (30D)"
               value={stats.completed}
               change="+21 vs last month"
               variant="success"
             />
             <StatsCard
-              title="VERIFIED DOCUMENTS"
-              value={stats.verified}
-              subtitle="99.2% valid"
+              title="TOTAL CONTRACTS"
+              value={contracts.length}
+              subtitle="All time"
               variant="info"
-            />
-            <StatsCard
-              title="SUSPICIOUS EVENTS"
-              value={stats.suspicious}
-              subtitle="Under review"
-              variant="danger"
             />
           </div>
 
@@ -145,7 +153,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setFilter('all')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -164,7 +172,17 @@ export default function DashboardPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Draft
+                  Drafts
+                </button>
+                <button
+                  onClick={() => setFilter('pending-to-sign')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === 'pending-to-sign'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Pending My Signature
                 </button>
                 <button
                   onClick={() => setFilter('AWAITING_SIGNATURE')}
@@ -174,7 +192,7 @@ export default function DashboardPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Awaiting Signature
+                  Awaiting Others
                 </button>
                 <button
                   onClick={() => setFilter('COMPLETED')}

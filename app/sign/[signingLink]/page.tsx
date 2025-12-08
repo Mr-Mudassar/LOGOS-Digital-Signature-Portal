@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
 import SignatureModal from '@/components/SignatureModal'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { FileSignature, CheckCircle, ArrowLeft, Check } from 'lucide-react'
 
 interface Signature {
@@ -278,13 +279,16 @@ export default function SignContractPage() {
             {!signed && contract.status !== 'COMPLETED' && (
               <>
                 <div className="flex justify-center pt-6 border-t border-gray-200">
-                  <button
+                  <LoadingButton
                     onClick={handleSignContract}
-                    className="btn-primary flex items-center gap-2 px-8 py-3 text-lg"
+                    loading={signing}
+                    loadingText="Signing..."
+                    className="flex items-center gap-2 px-8 py-3 text-lg"
+                    size="lg"
                   >
                     <FileSignature className="w-5 h-5" />
                     Sign Contract
-                  </button>
+                  </LoadingButton>
                 </div>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
@@ -301,6 +305,7 @@ export default function SignContractPage() {
         onClose={() => setShowSignatureModal(false)}
         onConfirm={handleSignatureConfirm}
         signerName={contract.receiverName}
+        loading={signing}
       />
     </div>
   )

@@ -9,8 +9,8 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Contracts', href: '/dashboard/contracts', icon: FileText },
+    { name: 'My Contracts', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Pending Signature', href: '/dashboard/pending-signature', icon: FileText },
   ]
 
   return (

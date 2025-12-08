@@ -1,15 +1,23 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import SignatureCanvas from 'react-signature-canvas'
-import { X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 interface SignatureModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: (signatureData: string) => void
   signerName: string
+  loading?: boolean
 }
 
 export default function SignatureModal({
@@ -17,16 +25,19 @@ export default function SignatureModal({
   onClose,
   onConfirm,
   signerName,
+  loading = false,
 }: SignatureModalProps) {
   const sigCanvas = useRef<SignatureCanvas>(null)
   const [isEmpty, setIsEmpty] = useState(true)
-  const [mounted, setMounted] = useState(false)
+  const [canvasSize, setCanvasSize] = useState({ width: 600, height: 200 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!isOpen || !mounted) return null
+    if (containerRef.current) {
+      const width = containerRef.current.offsetWidth
+      setCanvasSize({ width, height: 200 })
+    }
+  }, [isOpen])
 
   const handleClear = () => {
     sigCanvas.current?.clear()
@@ -37,6 +48,7 @@ export default function SignatureModal({
     if (sigCanvas.current && !isEmpty) {
       const signatureData = sigCanvas.current.toDataURL('image/png')
       onConfirm(signatureData)
+      onClose()
     }
   }
 
@@ -44,45 +56,31 @@ export default function SignatureModal({
     setIsEmpty(false)
   }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Sign Contract</DialogTitle>
+          <DialogDescription>{signerName}</DialogDescription>
+        </DialogHeader>
 
-  const modalContent = (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4"
-      onClick={handleOverlayClick}
-    >
-      <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Sign Contract</h2>
-            <p className="text-sm text-gray-600 mt-1">{signerName}</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-6">
+        <div className="py-4">
           <p className="text-gray-600 mb-4">
             Please draw your signature in the box below. Your signature will be embedded in the
             contract document.
           </p>
 
           {/* Signature Canvas */}
-          <div className="border-2 border-gray-300 rounded-lg bg-white">
+          <div
+            ref={containerRef}
+            className="border-2 border-gray-300 rounded-lg bg-white overflow-hidden"
+          >
             <SignatureCanvas
               ref={sigCanvas}
               canvasProps={{
-                className: 'w-full h-48 cursor-crosshair',
+                width: canvasSize.width,
+                height: canvasSize.height,
+                className: 'cursor-crosshair',
                 style: { touchAction: 'none' },
               }}
               backgroundColor="white"
@@ -95,28 +93,42 @@ export default function SignatureModal({
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-between gap-3 p-6 pt-0">
-          <button onClick={handleClear} className="btn-secondary" type="button">
+        <DialogFooter className="flex justify-between sm:justify-between">
+          <Button onClick={handleClear} variant="outline" type="button" disabled={loading}>
             Clear
-          </button>
+          </Button>
           <div className="flex gap-3">
-            <button onClick={onClose} className="btn-secondary" type="button">
+            <Button onClick={onClose} variant="outline" type="button" disabled={loading}>
               Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="btn-primary"
-              disabled={isEmpty}
-              type="button"
-            >
-              Confirm Signature
-            </button>
+            </Button>
+            <Button onClick={handleConfirm} disabled={isEmpty || loading} type="button">
+              {loading && (
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              {loading ? 'Confirming...' : 'Confirm Signature'}
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
-
-  return createPortal(modalContent, document.body)
 }

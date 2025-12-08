@@ -11,6 +11,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import SignatureModal from './SignatureModal'
+import ConfirmationModal from './ConfirmationModal'
+import { LoadingButton } from './ui/loading-button'
 import { Edit, FileSignature, Send, X, Check } from 'lucide-react'
 
 interface Signature {
@@ -64,6 +66,7 @@ export default function ContractViewSheet({
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [signing, setSigning] = useState(false)
   const [sending, setSending] = useState(false)
+  const [showSendConfirm, setShowSendConfirm] = useState(false)
 
   useEffect(() => {
     if (isOpen && contractId) {
@@ -124,13 +127,17 @@ export default function ContractViewSheet({
   }
 
   const handleSignatureConfirm = async (signatureData: string) => {
-    if (!contractId) return
+    if (!contractId || !contract) return
 
     setSigning(true)
     try {
+      // Determine if user is initiator or receiver
+      const isReceiver = session?.user?.id === contract.receiverId
+      const signerType = isReceiver ? 'receiver' : 'initiator'
+
       await axios.post(`/api/contracts/${contractId}/sign`, {
         signatureData,
-        signerType: 'initiator',
+        signerType,
       })
 
       setShowSignatureModal(false)
@@ -143,17 +150,17 @@ export default function ContractViewSheet({
     }
   }
 
+  const handleSendClick = () => {
+    setShowSendConfirm(true)
+  }
+
   const handleSendToReceiver = async () => {
     if (!contract || !contractId) return
-
-    if (!confirm(`Send this contract to ${contract.receiverEmail}?`)) {
-      return
-    }
 
     setSending(true)
     try {
       await axios.post(`/api/contracts/${contractId}/send`)
-      alert('Contract sent successfully!')
+      setShowSendConfirm(false)
       onClose()
       if (onUpdate) onUpdate()
     } catch (err: any) {
@@ -166,10 +173,15 @@ export default function ContractViewSheet({
   if (!isOpen) return null
 
   const isInitiator = contract && session?.user?.id === contract.initiatorId
+  const isReceiver =
+    contract &&
+    (session?.user?.id === contract.receiverId || session?.user?.email === contract.receiverEmail)
   const hasInitiatorSigned = contract?.signatures.some((sig) => sig.type === 'INITIATOR')
   const hasReceiverSigned = contract?.signatures.some((sig) => sig.type === 'RECEIVER')
   const initiatorSignature = contract?.signatures.find((sig) => sig.type === 'INITIATOR')
   const receiverSignature = contract?.signatures.find((sig) => sig.type === 'RECEIVER')
+  const canReceiverSign =
+    isReceiver && contract?.status === 'AWAITING_SIGNATURE' && !hasReceiverSigned
 
   return (
     <>
@@ -206,31 +218,46 @@ export default function ContractViewSheet({
                 <div className="flex gap-3 justify-end border-b pb-4">
                   {!isEditing && !hasInitiatorSigned && isInitiator && (
                     <>
-                      <button
+                      <LoadingButton
                         onClick={handleEdit}
-                        className="btn-secondary flex items-center gap-2"
+                        variant="outline"
+                        className="flex items-center gap-2"
                       >
                         <Edit className="w-4 h-4" />
                         Edit Content
-                      </button>
-                      <button
+                      </LoadingButton>
+                      <LoadingButton
                         onClick={handleSignContract}
-                        className="btn-primary flex items-center gap-2"
+                        loading={signing}
+                        loadingText="Signing..."
+                        className="flex items-center gap-2"
                       >
                         <FileSignature className="w-4 h-4" />
                         Sign Contract
-                      </button>
+                      </LoadingButton>
                     </>
                   )}
                   {hasInitiatorSigned && contract.status === 'DRAFT' && isInitiator && (
-                    <button
-                      onClick={handleSendToReceiver}
-                      disabled={sending}
-                      className="btn-primary flex items-center gap-2"
+                    <LoadingButton
+                      onClick={handleSendClick}
+                      loading={sending}
+                      loadingText="Sending..."
+                      className="flex items-center gap-2"
                     >
                       <Send className="w-4 h-4" />
-                      {sending ? 'Sending...' : 'Send to Second Party'}
-                    </button>
+                      Send to Second Party
+                    </LoadingButton>
+                  )}
+                  {canReceiverSign && (
+                    <LoadingButton
+                      onClick={handleSignContract}
+                      loading={signing}
+                      loadingText="Signing..."
+                      className="flex items-center gap-2"
+                    >
+                      <FileSignature className="w-4 h-4" />
+                      Sign Contract
+                    </LoadingButton>
                   )}
                 </div>
 
@@ -273,14 +300,18 @@ export default function ContractViewSheet({
                       placeholder="Contract content..."
                     />
                     <div className="flex justify-end gap-3 mt-4">
-                      <button onClick={handleCancelEdit} className="btn-secondary">
+                      <LoadingButton onClick={handleCancelEdit} variant="outline">
                         <X className="w-4 h-4 mr-2" />
                         Cancel
-                      </button>
-                      <button onClick={handleSaveEdit} disabled={saving} className="btn-primary">
+                      </LoadingButton>
+                      <LoadingButton
+                        onClick={handleSaveEdit}
+                        loading={saving}
+                        loadingText="Saving..."
+                      >
                         <Check className="w-4 h-4 mr-2" />
-                        {saving ? 'Saving...' : 'Save Changes'}
-                      </button>
+                        Save Changes
+                      </LoadingButton>
                     </div>
                   </div>
                 ) : (
@@ -291,62 +322,62 @@ export default function ContractViewSheet({
                     </div>
 
                     {/* Signatures Section */}
-                    {(hasInitiatorSigned || hasReceiverSigned) && (
-                      <div className="mt-8 space-y-6">
-                        <h3 className="text-sm font-semibold text-gray-700">Signatures</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                          {/* Initiator Signature */}
-                          <div className="border rounded-lg p-4 bg-white">
-                            <p className="text-xs text-gray-600 mb-2">First Party Signature</p>
-                            {initiatorSignature ? (
-                              <div>
-                                <img
-                                  src={initiatorSignature.signatureData}
-                                  alt="Initiator signature"
-                                  className="w-full h-24 object-contain border-b border-gray-200 mb-2"
-                                />
-                                <p className="text-xs text-gray-500">
-                                  Signed on{' '}
-                                  {new Date(initiatorSignature.signedAt).toLocaleDateString()}
-                                </p>
-                                <p className="text-xs font-medium text-gray-900">
-                                  {initiatorSignature.user.name || initiatorSignature.user.email}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                                Awaiting signature
-                              </div>
-                            )}
-                          </div>
+                    {/* {(hasInitiatorSigned || hasReceiverSigned) && ( */}
+                    <div className="mt-8 space-y-6">
+                      <h3 className="text-sm font-semibold text-gray-700">Signatures</h3>
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Initiator Signature */}
+                        <div className="border rounded-lg p-4 bg-white">
+                          <p className="text-xs text-gray-600 mb-2">First Party Signature</p>
+                          {initiatorSignature ? (
+                            <div>
+                              <img
+                                src={initiatorSignature.signatureData}
+                                alt="Initiator signature"
+                                className="w-full h-24 object-contain border-b border-gray-200 mb-2"
+                              />
+                              <p className="text-xs text-gray-500">
+                                Signed on{' '}
+                                {new Date(initiatorSignature.signedAt).toLocaleDateString()}
+                              </p>
+                              <p className="text-xs font-medium text-gray-900">
+                                {initiatorSignature.user.name || initiatorSignature.user.email}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
+                              Awaiting signature
+                            </div>
+                          )}
+                        </div>
 
-                          {/* Receiver Signature */}
-                          <div className="border rounded-lg p-4 bg-white">
-                            <p className="text-xs text-gray-600 mb-2">Second Party Signature</p>
-                            {receiverSignature ? (
-                              <div>
-                                <img
-                                  src={receiverSignature.signatureData}
-                                  alt="Receiver signature"
-                                  className="w-full h-24 object-contain border-b border-gray-200 mb-2"
-                                />
-                                <p className="text-xs text-gray-500">
-                                  Signed on{' '}
-                                  {new Date(receiverSignature.signedAt).toLocaleDateString()}
-                                </p>
-                                <p className="text-xs font-medium text-gray-900">
-                                  {receiverSignature.user.name || receiverSignature.user.email}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                                Awaiting signature
-                              </div>
-                            )}
-                          </div>
+                        {/* Receiver Signature */}
+                        <div className="border rounded-lg p-4 bg-white">
+                          <p className="text-xs text-gray-600 mb-2">Second Party Signature</p>
+                          {receiverSignature ? (
+                            <div>
+                              <img
+                                src={receiverSignature.signatureData}
+                                alt="Receiver signature"
+                                className="w-full h-24 object-contain border-b border-gray-200 mb-2"
+                              />
+                              <p className="text-xs text-gray-500">
+                                Signed on{' '}
+                                {new Date(receiverSignature.signedAt).toLocaleDateString()}
+                              </p>
+                              <p className="text-xs font-medium text-gray-900">
+                                {receiverSignature.user.name || receiverSignature.user.email}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
+                              Awaiting signature
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
+                    {/* )} */}
                   </div>
                 )}
               </>
@@ -361,7 +392,23 @@ export default function ContractViewSheet({
           isOpen={showSignatureModal}
           onClose={() => setShowSignatureModal(false)}
           onConfirm={handleSignatureConfirm}
-          signerName={contract.initiatorName}
+          signerName={isReceiver ? contract.receiverName : contract.initiatorName}
+          loading={signing}
+        />
+      )}
+
+      {/* Send Confirmation Modal */}
+      {contract && (
+        <ConfirmationModal
+          isOpen={showSendConfirm}
+          onClose={() => setShowSendConfirm(false)}
+          onConfirm={handleSendToReceiver}
+          title="Send Contract"
+          description={`Send this contract to ${contract.receiverEmail} for their signature?`}
+          confirmText="Send"
+          cancelText="Cancel"
+          variant="info"
+          loading={sending}
         />
       )}
     </>

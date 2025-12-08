@@ -25,7 +25,7 @@ function generateMockContract(
 
 ${title}
 
-This Agreement is made and entered into on ${today}, in Lagos State, Nigeria.
+This Agreement is made and entered into on ${today},
 
 BETWEEN:
 
@@ -62,17 +62,6 @@ Either party may terminate this agreement by providing written notice to the oth
 
 7. SIGNATURES
 By signing below, both parties acknowledge that they have read, understood, and agree to be bound by the terms of this agreement.
-
-_______________________________
-${initiatorName}
-First Party (Initiator)
-Date: _____________
-
-
-_______________________________
-${receiverName}
-Second Party (Receiver)
-Date: _____________
 
 
 [NOTE: This contract was generated using a template. For legal matters, please consult with a qualified attorney.]

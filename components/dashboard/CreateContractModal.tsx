@@ -1,8 +1,8 @@
 'use client'
 
+import axios from 'axios'
 import { useState } from 'react'
 import { X, Upload } from 'lucide-react'
-import axios from 'axios'
 
 interface CreateContractModalProps {
   isOpen: boolean

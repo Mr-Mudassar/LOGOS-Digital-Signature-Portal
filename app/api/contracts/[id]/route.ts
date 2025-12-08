@@ -50,8 +50,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
-    // Check if user has access to this contract
-    if (contract.initiatorId !== session.user.id && contract.receiverId !== session.user.id) {
+    // Get current user's email
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Check if user has access to this contract (by ID or email)
+    const isInitiator = contract.initiatorId === session.user.id
+    const isReceiver =
+      contract.receiverId === session.user.id || contract.receiverEmail === user.email
+
+    if (!isInitiator && !isReceiver) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

@@ -39,8 +39,28 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    if (signerType === 'receiver' && contract.receiverId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    if (signerType === 'receiver') {
+      // Get current user's email
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true },
+      })
+
+      // Check if user is the receiver (by ID or email)
+      const isReceiverById = contract.receiverId === session.user.id
+      const isReceiverByEmail = user && contract.receiverEmail === user.email
+
+      if (!isReceiverById && !isReceiverByEmail) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+      }
+
+      // Update contract with receiverId if not set
+      if (!contract.receiverId) {
+        await prisma.contract.update({
+          where: { id },
+          data: { receiverId: session.user.id },
+        })
+      }
     }
 
     // Check if user already signed
