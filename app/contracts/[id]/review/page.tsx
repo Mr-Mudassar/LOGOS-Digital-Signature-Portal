@@ -35,6 +35,7 @@ export default function ContractReviewPage() {
   const [sending, setSending] = useState(false)
   const [showSendConfirm, setShowSendConfirm] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchContract()
   }, [contractId])

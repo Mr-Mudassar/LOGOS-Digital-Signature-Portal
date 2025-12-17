@@ -17,13 +17,25 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: { email: true, role: true, name: true },
     })
 
-    // Don't reveal if user exists
+    // Don't reveal if user exists, but prevent admin password resets
     if (!user) {
       return NextResponse.json(
         { message: 'If an account exists, a password reset link has been sent' },
         { status: 200 }
+      )
+    }
+
+    // Prevent admin password resets
+    if (user.role === 'ADMIN') {
+      return NextResponse.json(
+        {
+          error:
+            'Admin accounts cannot reset passwords through this method. Please contact system administrator.',
+        },
+        { status: 403 }
       )
     }
 

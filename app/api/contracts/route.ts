@@ -15,6 +15,9 @@ const createContractSchema = z.object({
   receiverName: z.string().min(1, 'Receiver name is required'),
   receiverEmail: z.string().email('Valid receiver email is required'),
   userContext: z.string().optional(),
+  category: z
+    .enum(['HOUSING', 'LAND', 'CIVIL_SERVICE_COMMISSION', 'MINISTRY_OF_JUSTICE', 'OTHER'])
+    .optional(),
   referenceDocumentUrl: z.string().optional(),
   referenceDocumentName: z.string().optional(),
 })
@@ -108,6 +111,7 @@ export async function POST(request: NextRequest) {
         receiverName: data.receiverName,
         receiverEmail: data.receiverEmail,
         userContext: data.userContext,
+        category: data.category || 'OTHER',
         referenceDocumentUrl: data.referenceDocumentUrl,
         referenceDocumentName: data.referenceDocumentName,
         signingLink,

@@ -22,6 +22,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 })
     }
 
+    // Verify the user exists and is not an admin
+    const user = await prisma.user.findUnique({
+      where: { email: resetToken.email },
+      select: { role: true },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    if (user.role === 'ADMIN') {
+      // Delete the token and reject
+      await prisma.passwordResetToken.delete({
+        where: { token },
+      })
+      return NextResponse.json(
+        { error: 'Admin accounts cannot reset passwords through this method' },
+        { status: 403 }
+      )
+    }
+
     // Hash new password
     const hashedPassword = await bcrypt.hash(password, 10)
 

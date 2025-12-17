@@ -50,22 +50,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
-    // Get current user's email
+    // Get current user's email and role
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true },
+      select: { email: true, role: true },
     })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Admins can view all contracts
+    const isAdmin = user.role === 'ADMIN'
+
     // Check if user has access to this contract (by ID or email)
     const isInitiator = contract.initiatorId === session.user.id
     const isReceiver =
       contract.receiverId === session.user.id || contract.receiverEmail === user.email
 
-    if (!isInitiator && !isReceiver) {
+    if (!isAdmin && !isInitiator && !isReceiver) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

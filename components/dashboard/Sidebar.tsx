@@ -2,16 +2,40 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { signOut } from 'next-auth/react'
-import { Shield, LayoutDashboard, FileText, User, LogOut, Search } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
+import {
+  Shield,
+  LayoutDashboard,
+  FileText,
+  User,
+  LogOut,
+  Search,
+  BarChart3,
+  Building2,
+  ShieldCheck,
+} from 'lucide-react'
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
-  const navigation = [
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  // Admin navigation - only Stats and MDA
+  const adminNavigation = [
+    { name: 'Stats', href: '/admin/stats', icon: BarChart3 },
+    { name: 'MDA', href: '/admin/mda', icon: Building2 },
+  ]
+
+  // User navigation - My Contracts, Pending Signature, Stats
+  const userNavigation = [
     { name: 'My Contracts', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Pending Signature', href: '/dashboard/pending-signature', icon: FileText },
+    { name: 'Stats', href: '/dashboard/stats', icon: BarChart3 },
   ]
+
+  // Choose navigation based on role
+  const navigation = isAdmin ? adminNavigation : userNavigation
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">

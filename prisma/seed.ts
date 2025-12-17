@@ -14,6 +14,18 @@ async function main() {
   // Create test users
   const hashedPassword = await bcrypt.hash('password123', 10)
 
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@mowu.gov.ng' },
+    update: {},
+    create: {
+      email: 'admin@mowu.gov.ng',
+      name: 'MOWU Administrator',
+      password: hashedPassword,
+      role: 'ADMIN',
+    },
+  })
+
   const user1 = await prisma.user.upsert({
     where: { email: 'john.doe@example.com' },
     update: {},
@@ -34,7 +46,7 @@ async function main() {
     },
   })
 
-  console.log('✓ Created test users')
+  console.log('✓ Created admin and test users')
 
   // Create sample contracts
   const contract1 = await prisma.contract.create({
@@ -141,7 +153,13 @@ Terms and conditions apply.`,
   console.log('✓ Created sample signatures')
 
   console.log('🎉 Database seeded successfully!')
-  console.log('\nTest account credentials:')
+  console.log('\n' + '='.repeat(50))
+  console.log('ADMIN ACCOUNT:')
+  console.log('Email: admin@mowu.gov.ng')
+  console.log('Password: password123')
+  console.log('Role: ADMIN')
+  console.log('='.repeat(50))
+  console.log('\nTest User Accounts:')
   console.log('Email: john.doe@example.com')
   console.log('Password: password123')
   console.log('\nEmail: jane.smith@example.com')

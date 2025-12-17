@@ -8,7 +8,6 @@ import axios from 'axios'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ContractCard from '@/components/dashboard/ContractCard'
 import CreateContractModal from '@/components/dashboard/CreateContractModal'
-import StatsCard from '@/components/dashboard/StatsCard'
 import ContractViewSheet from '@/components/ContractViewSheet'
 
 export default function DashboardPage() {
@@ -21,12 +20,18 @@ export default function DashboardPage() {
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
+  const isAdmin = session?.user?.role === 'ADMIN'
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
+    } else if (status === 'authenticated' && isAdmin) {
+      // Redirect admin to their stats page
+      router.push('/admin/stats')
     }
-  }, [status, router])
+  }, [status, router, isAdmin])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (status === 'authenticated') {
       fetchContracts()
@@ -88,14 +93,6 @@ export default function DashboardPage() {
     )
   }
 
-  const stats = {
-    pending: contracts.filter((c) => c.status === 'DRAFT').length,
-    awaitingSignature: contracts.filter(
-      (c) => c.status === 'AWAITING_SIGNATURE' && c.receiverId === session?.user?.id
-    ).length,
-    completed: contracts.filter((c) => c.status === 'COMPLETED').length,
-  }
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -112,36 +109,15 @@ export default function DashboardPage() {
                 Manage your contracts, signatures, and pending documents.
               </p>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              New Contract
-            </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard title="DRAFTS" value={stats.pending} change="+3 today" variant="warning" />
-            <StatsCard
-              title="PENDING SIGNATURE"
-              value={stats.awaitingSignature}
-              change="Needs your action"
-              variant="info"
-            />
-            <StatsCard
-              title="COMPLETED (30D)"
-              value={stats.completed}
-              change="+21 vs last month"
-              variant="success"
-            />
-            <StatsCard
-              title="TOTAL CONTRACTS"
-              value={contracts.length}
-              subtitle="All time"
-              variant="info"
-            />
+            {!isAdmin && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                New Contract
+              </button>
+            )}
           </div>
 
           {/* Recent Activities */}

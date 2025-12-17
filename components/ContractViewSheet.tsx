@@ -10,8 +10,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import SignatureModal from './SignatureModal'
 import ConfirmationModal from './ConfirmationModal'
+import RichTextEditor from './RichTextEditor'
 import { LoadingButton } from './ui/loading-button'
 import { Edit, FileSignature, Send, X, Check } from 'lucide-react'
 
@@ -63,11 +63,12 @@ export default function ContractViewSheet({
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState('')
   const [saving, setSaving] = useState(false)
-  const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [showSignConfirm, setShowSignConfirm] = useState(false)
   const [signing, setSigning] = useState(false)
   const [sending, setSending] = useState(false)
   const [showSendConfirm, setShowSendConfirm] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isOpen && contractId) {
       fetchContract()
@@ -123,28 +124,30 @@ export default function ContractViewSheet({
   }
 
   const handleSignContract = () => {
-    setShowSignatureModal(true)
+    setShowSignConfirm(true)
   }
 
-  const handleSignatureConfirm = async (signatureData: string) => {
+  const handleSignatureConfirm = async () => {
     if (!contractId || !contract) return
 
     setSigning(true)
     try {
       // Determine if user is initiator or receiver
-      const isReceiver = session?.user?.id === contract.receiverId
-      const signerType = isReceiver ? 'receiver' : 'initiator'
+      const isReceiverUser =
+        session?.user?.id === contract.receiverId || session?.user?.email === contract.receiverEmail
+      const signerType = isReceiverUser ? 'receiver' : 'initiator'
+      const signerName = isReceiverUser ? contract.receiverName : contract.initiatorName
 
       await axios.post(`/api/contracts/${contractId}/sign`, {
-        signatureData,
         signerType,
+        signerName,
       })
 
-      setShowSignatureModal(false)
+      setShowSignConfirm(false)
       fetchContract()
       if (onUpdate) onUpdate()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save signature')
+      setError(err.response?.data?.error || 'Failed to sign contract')
     } finally {
       setSigning(false)
     }
@@ -293,11 +296,10 @@ export default function ContractViewSheet({
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Edit Contract Content
                     </label>
-                    <textarea
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
-                      placeholder="Contract content..."
+                    <RichTextEditor
+                      content={editedContent}
+                      onChange={setEditedContent}
+                      editable={true}
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <LoadingButton onClick={handleCancelEdit} variant="outline">
@@ -317,67 +319,73 @@ export default function ContractViewSheet({
                 ) : (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-4">Contract Terms</h3>
-                    <div className="whitespace-pre-wrap font-serif text-gray-900 bg-gray-50 p-6 rounded-lg border">
-                      {contract.aiGeneratedContent || 'No content generated yet.'}
-                    </div>
+                    <RichTextEditor
+                      content={contract.aiGeneratedContent || '<p>No content generated yet.</p>'}
+                      onChange={() => {}}
+                      editable={false}
+                    />
 
                     {/* Signatures Section */}
-                    {/* {(hasInitiatorSigned || hasReceiverSigned) && ( */}
-                    <div className="mt-8 space-y-6">
-                      <h3 className="text-sm font-semibold text-gray-700">Signatures</h3>
-                      <div className="grid grid-cols-2 gap-6">
-                        {/* Initiator Signature */}
-                        <div className="border rounded-lg p-4 bg-white">
-                          <p className="text-xs text-gray-600 mb-2">First Party Signature</p>
-                          {initiatorSignature ? (
-                            <div>
-                              <img
-                                src={initiatorSignature.signatureData}
-                                alt="Initiator signature"
-                                className="w-full h-24 object-contain border-b border-gray-200 mb-2"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Signed on{' '}
-                                {new Date(initiatorSignature.signedAt).toLocaleDateString()}
-                              </p>
-                              <p className="text-xs font-medium text-gray-900">
-                                {initiatorSignature.user.name || initiatorSignature.user.email}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                              Awaiting signature
-                            </div>
-                          )}
-                        </div>
+                    {(hasInitiatorSigned || hasReceiverSigned) && (
+                      <div className="mt-8 space-y-6">
+                        <h3 className="text-sm font-semibold text-gray-700">Signatures</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                          {/* Initiator Signature */}
+                          <div className="border rounded-lg p-4 bg-white">
+                            <p className="text-xs text-gray-600 mb-2">First Party</p>
+                            {initiatorSignature ? (
+                              <div>
+                                <p className="text-lg font-semibold text-gray-900 mb-2">
+                                  {contract.initiatorName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Signed on{' '}
+                                  {new Date(initiatorSignature.signedAt).toLocaleDateString(
+                                    'en-US',
+                                    {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                    }
+                                  )}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="h-20 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
+                                Awaiting signature
+                              </div>
+                            )}
+                          </div>
 
-                        {/* Receiver Signature */}
-                        <div className="border rounded-lg p-4 bg-white">
-                          <p className="text-xs text-gray-600 mb-2">Second Party Signature</p>
-                          {receiverSignature ? (
-                            <div>
-                              <img
-                                src={receiverSignature.signatureData}
-                                alt="Receiver signature"
-                                className="w-full h-24 object-contain border-b border-gray-200 mb-2"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Signed on{' '}
-                                {new Date(receiverSignature.signedAt).toLocaleDateString()}
-                              </p>
-                              <p className="text-xs font-medium text-gray-900">
-                                {receiverSignature.user.name || receiverSignature.user.email}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="h-24 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                              Awaiting signature
-                            </div>
-                          )}
+                          {/* Receiver Signature */}
+                          <div className="border rounded-lg p-4 bg-white">
+                            <p className="text-xs text-gray-600 mb-2">Second Party</p>
+                            {receiverSignature ? (
+                              <div>
+                                <p className="text-lg font-semibold text-gray-900 mb-2">
+                                  {contract.receiverName}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Signed on{' '}
+                                  {new Date(receiverSignature.signedAt).toLocaleDateString(
+                                    'en-US',
+                                    {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                    }
+                                  )}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="h-20 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
+                                Awaiting signature
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {/* )} */}
+                    )}
                   </div>
                 )}
               </>
@@ -386,13 +394,19 @@ export default function ContractViewSheet({
         </SheetContent>
       </Sheet>
 
-      {/* Signature Modal */}
+      {/* Sign Confirmation Modal */}
       {contract && (
-        <SignatureModal
-          isOpen={showSignatureModal}
-          onClose={() => setShowSignatureModal(false)}
+        <ConfirmationModal
+          isOpen={showSignConfirm}
+          onClose={() => setShowSignConfirm(false)}
           onConfirm={handleSignatureConfirm}
-          signerName={isReceiver ? contract.receiverName : contract.initiatorName}
+          title="Sign Contract"
+          description={`Are you sure you want to sign this contract? Your name (${
+            isReceiver ? contract.receiverName : contract.initiatorName
+          }) will be added to the document with the current date.`}
+          confirmText="Sign Contract"
+          cancelText="Cancel"
+          variant="info"
           loading={signing}
         />
       )}

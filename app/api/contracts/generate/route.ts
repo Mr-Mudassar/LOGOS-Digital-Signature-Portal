@@ -21,50 +21,51 @@ function generateMockContract(
     day: 'numeric',
   })
 
-  return `CONTRACT AGREEMENT
+  return `<h1>CONTRACT AGREEMENT</h1>
+<h2>${title}</h2>
+<p>This Agreement is made and entered into on <strong>${today}</strong>,</p>
 
-${title}
+<h3>BETWEEN:</h3>
 
-This Agreement is made and entered into on ${today},
+<p><strong>FIRST PARTY (Initiator):</strong> ${initiatorName}<br />
+(Hereinafter referred to as "the First Party")</p>
 
-BETWEEN:
+<p><strong>AND</strong></p>
 
-FIRST PARTY (Initiator): ${initiatorName}
-(Hereinafter referred to as "the First Party")
+<p><strong>SECOND PARTY (Receiver):</strong> ${receiverName}<br />
+(Hereinafter referred to as "the Second Party")</p>
 
-AND
+<p>WHEREAS the parties wish to enter into this agreement under the following terms and conditions:</p>
 
-SECOND PARTY (Receiver): ${receiverName}
-(Hereinafter referred to as "the Second Party")
+<h3>1. PURPOSE</h3>
+<p>${context || 'This contract defines the terms and conditions agreed upon by both parties.'}</p>
 
-WHEREAS the parties wish to enter into this agreement under the following terms and conditions:
+<h3>2. TERMS AND CONDITIONS</h3>
+<ul>
+  <li>2.1. Both parties agree to fulfill their obligations as outlined in this agreement.</li>
+  <li>2.2. This agreement shall be governed by the laws of Lagos State, Nigeria.</li>
+  <li>2.3. Any disputes arising from this agreement shall be resolved through mediation or arbitration.</li>
+</ul>
 
-1. PURPOSE
-${context || 'This contract defines the terms and conditions agreed upon by both parties.'}
+<h3>3. DURATION</h3>
+<p>This agreement shall commence on the date of signing and shall remain in effect until the obligations are fulfilled or as otherwise agreed by both parties.</p>
 
-2. TERMS AND CONDITIONS
-2.1. Both parties agree to fulfill their obligations as outlined in this agreement.
-2.2. This agreement shall be governed by the laws of Lagos State, Nigeria.
-2.3. Any disputes arising from this agreement shall be resolved through mediation or arbitration.
+<h3>4. OBLIGATIONS</h3>
+<ul>
+  <li>4.1. The First Party agrees to perform their duties as specified.</li>
+  <li>4.2. The Second Party agrees to perform their duties as specified.</li>
+</ul>
 
-3. DURATION
-This agreement shall commence on the date of signing and shall remain in effect until the obligations are fulfilled or as otherwise agreed by both parties.
+<h3>5. CONFIDENTIALITY</h3>
+<p>Both parties agree to maintain confidentiality regarding any sensitive information shared during the course of this agreement.</p>
 
-4. OBLIGATIONS
-4.1. The First Party agrees to perform their duties as specified.
-4.2. The Second Party agrees to perform their duties as specified.
+<h3>6. TERMINATION</h3>
+<p>Either party may terminate this agreement by providing written notice to the other party, subject to any applicable terms.</p>
 
-5. CONFIDENTIALITY
-Both parties agree to maintain confidentiality regarding any sensitive information shared during the course of this agreement.
+<h3>7. SIGNATURES</h3>
+<p>By signing below, both parties acknowledge that they have read, understood, and agree to be bound by the terms of this agreement.</p>
 
-6. TERMINATION
-Either party may terminate this agreement by providing written notice to the other party, subject to any applicable terms.
-
-7. SIGNATURES
-By signing below, both parties acknowledge that they have read, understood, and agree to be bound by the terms of this agreement.
-
-
-[NOTE: This contract was generated using a template. For legal matters, please consult with a qualified attorney.]
+<p><em>[NOTE: This contract was generated using a template. For legal matters, please consult with a qualified attorney.]</em></p>
 `
 }
 
@@ -139,7 +140,9 @@ Generate a complete, legally-sound contract that:
 4. Follows standard contract formatting
 5. Is professional and comprehensive
 
-Format the contract in clean, structured text with proper headings and sections.`
+IMPORTANT: Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em). 
+Use headings for sections, paragraphs for content, and lists where appropriate.
+Do NOT include DOCTYPE, html, head, or body tags - only the content HTML.`
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini', // Using gpt-4o-mini - available for all API keys
           messages: [

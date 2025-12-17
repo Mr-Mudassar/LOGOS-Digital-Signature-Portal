@@ -20,8 +20,11 @@ export default function PendingSignaturePage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin')
+    } else if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
+      // Redirect admin to their stats page
+      router.push('/admin/stats')
     }
-  }, [status, router])
+  }, [status, router, session])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -110,7 +113,7 @@ export default function PendingSignaturePage() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Signatures</h3>
                   <p className="text-gray-600">
-                    You don't have any contracts waiting for your signature at the moment.
+                    You don&apos;t have any contracts waiting for your signature at the moment.
                   </p>
                 </div>
               ) : (

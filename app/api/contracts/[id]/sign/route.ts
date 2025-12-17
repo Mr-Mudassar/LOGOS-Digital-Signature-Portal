@@ -13,11 +13,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const { id } = params
     const body = await request.json()
-    const { signatureData, signerType } = body
+    const { signerName, signerType } = body
 
-    if (!signatureData || !signerType) {
+    if (!signerName || !signerType) {
       return NextResponse.json(
-        { error: 'Signature data and signer type are required' },
+        { error: 'Signer name and signer type are required' },
         { status: 400 }
       )
     }
@@ -76,12 +76,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'You have already signed this contract' }, { status: 400 })
     }
 
-    // Create signature
+    // Create signature with signer name and current date
+    const signatureData = `${signerName} - ${new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })}`
+
     await prisma.signature.create({
       data: {
         contractId: id,
         userId: session.user.id,
-        signatureData,
+        signatureData, // Store as "Name - Date" format
         type,
       },
     })

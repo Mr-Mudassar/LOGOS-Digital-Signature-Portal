@@ -22,10 +22,19 @@ export default function CreateContractModal({
     receiverName: '',
     receiverEmail: '',
     userContext: '',
+    category: 'OTHER',
   })
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const MDA_OPTIONS = [
+    { value: 'HOUSING', label: 'Housing' },
+    { value: 'LAND', label: 'Land' },
+    { value: 'CIVIL_SERVICE_COMMISSION', label: 'Civil Service Commission' },
+    { value: 'MINISTRY_OF_JUSTICE', label: 'Ministry of Justice' },
+    { value: 'OTHER', label: 'Other' },
+  ]
 
   if (!isOpen) return null
 
@@ -64,6 +73,7 @@ export default function CreateContractModal({
         receiverName: formData.receiverName,
         receiverEmail: formData.receiverEmail,
         userContext: formData.userContext,
+        category: formData.category,
         referenceDocumentName: file?.name,
       })
 
@@ -102,6 +112,7 @@ export default function CreateContractModal({
       receiverName: '',
       receiverEmail: '',
       userContext: '',
+      category: 'OTHER',
     })
     setFile(null)
     setError('')
@@ -153,6 +164,26 @@ export default function CreateContractModal({
                 placeholder="e.g. Housing Lease Agreement for Flat 3B, Yaba"
                 required
               />
+            </div>
+
+            {/* MDA Category */}
+            <div>
+              <label className="label">MDA Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="input-field"
+                required
+              >
+                {MDA_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Select the Ministry, Department, or Agency this contract relates to
+              </p>
             </div>
 
             {/* Upload Document */}

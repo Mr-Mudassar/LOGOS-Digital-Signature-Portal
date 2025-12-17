@@ -43,6 +43,7 @@ export default function SignContractPage() {
   const [signing, setSigning] = useState(false)
   const [signed, setSigned] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (status === 'authenticated') {
       fetchContract()

@@ -11,21 +11,27 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
-  id                String     @id @default(cuid())
-  email             String     @unique
-  name              String?
-  password          String
-  emailVerified     DateTime?
-  image             String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          UserRole  @default(USER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   // Relations
-  contractsInitiated Contract[] @relation("ContractInitiator")
-  contractsReceived  Contract[] @relation("ContractReceiver")
+  contractsInitiated Contract[]  @relation("ContractInitiator")
+  contractsReceived  Contract[]  @relation("ContractReceiver")
   signatures         Signature[]
-  
+
   @@map("users")
 }
 
@@ -35,45 +41,54 @@ enum ContractStatus {
   COMPLETED
 }
 
+enum MDACategory {
+  HOUSING
+  LAND
+  CIVIL_SERVICE_COMMISSION
+  MINISTRY_OF_JUSTICE
+  OTHER
+}
+
 model Contract {
-  id                    String         @id @default(cuid())
-  title                 String
-  status                ContractStatus @default(DRAFT)
-  
+  id       String         @id @default(cuid())
+  title    String
+  status   ContractStatus @default(DRAFT)
+  category MDACategory    @default(OTHER)
+
   // Document and AI generation
   referenceDocumentUrl  String?
   referenceDocumentName String?
-  userContext           String?        @db.Text
-  aiGeneratedContent    String?        @db.Text
+  userContext           String? @db.Text
+  aiGeneratedContent    String? @db.Text
   finalDocumentUrl      String?
-  
+
   // Parties
-  initiatorId           String
-  initiator             User           @relation("ContractInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
-  initiatorName         String
-  initiatorEmail        String?
-  
-  receiverId            String?
-  receiver              User?          @relation("ContractReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
-  receiverName          String
-  receiverEmail         String
-  
+  initiatorId    String
+  initiator      User    @relation("ContractInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  initiatorName  String
+  initiatorEmail String?
+
+  receiverId    String?
+  receiver      User?   @relation("ContractReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  receiverName  String
+  receiverEmail String
+
   // Signing
-  signingLink           String?        @unique
-  signingLinkExpiresAt  DateTime?
-  
+  signingLink          String?   @unique
+  signingLinkExpiresAt DateTime?
+
   // Timestamps
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  completedAt           DateTime?
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
   // Relations
-  signatures            Signature[]
-  
-  @@map("contracts")
+  signatures Signature[]
+
   @@index([initiatorId])
   @@index([receiverId])
   @@index([status])
+  @@map("contracts")
 }
 
 enum SignatureType {
@@ -82,21 +97,21 @@ enum SignatureType {
 }
 
 model Signature {
-  id            String        @id @default(cuid())
-  contractId    String
-  contract      Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   type          SignatureType
   signatureData String        @db.Text // Base64 or signature image data
   signedAt      DateTime      @default(now())
   ipAddress     String?
-  
-  @@map("signatures")
+
   @@index([contractId])
   @@index([userId])
+  @@map("signatures")
 }
 
 model PasswordResetToken {
@@ -105,7 +120,7 @@ model PasswordResetToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
-  @@map("password_reset_tokens")
+
   @@index([email])
+  @@map("password_reset_tokens")
 }
