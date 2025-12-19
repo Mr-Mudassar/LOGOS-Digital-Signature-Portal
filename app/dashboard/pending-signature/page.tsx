@@ -16,6 +16,8 @@ export default function PendingSignaturePage() {
   const [loading, setLoading] = useState(true)
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -55,6 +57,12 @@ export default function PendingSignaturePage() {
     setSelectedContractId(null)
   }
 
+  // Pagination calculations
+  const totalPages = Math.ceil(contracts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContracts = contracts.slice(startIndex, endIndex)
+
   if (status === 'loading' || status === 'unauthenticated') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -91,7 +99,7 @@ export default function PendingSignaturePage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-blue-600">📝</span>
+                <FileSignature className="w-6 h-6 text-primary" />
                 <h2 className="text-xl font-semibold">Awaiting Your Signature</h2>
               </div>
               <p className="text-sm text-gray-600">
@@ -126,7 +134,7 @@ export default function PendingSignaturePage() {
                     <div>Received</div>
                     <div className="text-right">Actions</div>
                   </div>
-                  {contracts.map((contract) => (
+                  {paginatedContracts.map((contract) => (
                     <ContractCard
                       key={contract.id}
                       contract={contract}
@@ -134,6 +142,53 @@ export default function PendingSignaturePage() {
                       onOpenContract={handleOpenContract}
                     />
                   ))}
+
+                  {/* Pagination Controls */}
+                  {contracts.length > 0 && (
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Items per page:</span>
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value))
+                            setCurrentPage(1)
+                          }}
+                          className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={30}>30</option>
+                          <option value={40}>40</option>
+                          <option value={50}>50</option>
+                        </select>
+                        <span className="text-sm text-gray-600 ml-4">
+                          Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
+                          {contracts.length}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Shield, Plus } from 'lucide-react'
+import { Shield, Plus, FileText, Clock } from 'lucide-react'
 import axios from 'axios'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ContractCard from '@/components/dashboard/ContractCard'
@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
@@ -80,6 +82,17 @@ export default function DashboardPage() {
     setSelectedContractId(null)
   }
 
+  // Pagination calculations
+  const totalPages = Math.ceil(contracts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContracts = contracts.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter])
+
   if (status === 'loading' || status === 'unauthenticated') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,7 +116,8 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <span className="text-gray-400">📊</span> My Contracts
+                <FileText className="w-8 h-8 text-primary" />
+                My Contracts
               </h1>
               <p className="text-gray-600 mt-1">
                 Manage your contracts, signatures, and pending documents.
@@ -124,7 +138,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-6">
-                <span className="text-green-600">🕐</span>
+                <Clock className="w-6 h-6 text-primary" />
                 <h2 className="text-xl font-semibold">Recent Activities</h2>
               </div>
 
@@ -206,7 +220,7 @@ export default function DashboardPage() {
                     <div>Updated</div>
                     <div className="text-right">Actions</div>
                   </div>
-                  {contracts.map((contract) => (
+                  {paginatedContracts.map((contract) => (
                     <ContractCard
                       key={contract.id}
                       contract={contract}
@@ -214,6 +228,53 @@ export default function DashboardPage() {
                       onOpenContract={handleOpenContract}
                     />
                   ))}
+
+                  {/* Pagination Controls */}
+                  {contracts.length > 0 && (
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Items per page:</span>
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value))
+                            setCurrentPage(1)
+                          }}
+                          className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={30}>30</option>
+                          <option value={40}>40</option>
+                          <option value={50}>50</option>
+                        </select>
+                        <span className="text-sm text-gray-600 ml-4">
+                          Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
+                          {contracts.length}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -68,6 +68,8 @@ export default function MDADashboard() {
   const [viewingContractId, setViewingContractId] = useState<string | null>(null)
   const [viewingContract, setViewingContract] = useState<ContractDetails | null>(null)
   const [loadingContract, setLoadingContract] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -77,6 +79,11 @@ export default function MDADashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchContracts()
+  }, [selectedCategory])
+
+  // Reset to page 1 when category changes
+  useEffect(() => {
+    setCurrentPage(1)
   }, [selectedCategory])
 
   const fetchContracts = async () => {
@@ -131,6 +138,12 @@ export default function MDADashboard() {
     setViewingContract(null)
   }
 
+  // Pagination calculations
+  const totalPages = Math.ceil((data?.contracts.length || 0) / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContracts = data?.contracts.slice(startIndex, endIndex) || []
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -157,7 +170,10 @@ export default function MDADashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">MDA Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Building2 className="w-8 h-8 text-primary" />
+            MDA Dashboard
+          </h1>
           <p className="text-gray-600 mt-2">
             Ministries, Departments & Agencies Contract Management
           </p>
@@ -243,7 +259,7 @@ export default function MDADashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.contracts.map((contract) => (
+                  {paginatedContracts.map((contract) => (
                     <tr key={contract.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{contract.title}</div>
@@ -284,6 +300,53 @@ export default function MDADashboard() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination Controls */}
+              {data.contracts.length > 0 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Items per page:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value))
+                        setCurrentPage(1)
+                      }}
+                      className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={40}>40</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600 ml-4">
+                      Showing {startIndex + 1}-{Math.min(endIndex, data.contracts.length)} of{' '}
+                      {data.contracts.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="px-6 py-12 text-center">

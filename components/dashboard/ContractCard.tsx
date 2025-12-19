@@ -1,10 +1,11 @@
 'use client'
 
 import { formatDateTime } from '@/lib/utils'
-import { Eye, Trash2, Send, FileSignature } from 'lucide-react'
+import { Eye, Trash2, Send, FileSignature, MoreVertical } from 'lucide-react'
 import { useState } from 'react'
 import axios from 'axios'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 interface ContractCardProps {
   contract: any
@@ -111,44 +112,52 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
       </div>
 
       <div className="flex items-center justify-end gap-2">
-        <button
-          onClick={(e) => handleAction(e, 'view')}
-          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-          title="View Contract"
+        <DropdownMenu
+          trigger={
+            <button
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              title="Actions"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          }
         >
-          <Eye className="w-4 h-4" />
-        </button>
-
-        {canSign && (
-          <button
-            onClick={(e) => handleAction(e, 'sign')}
-            className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-            title="Sign Contract"
+          <DropdownMenuItem
+            onClick={(e) => handleAction(e, 'view')}
+            icon={<Eye className="w-4 h-4" />}
           >
-            <FileSignature className="w-4 h-4" />
-          </button>
-        )}
+            View
+          </DropdownMenuItem>
 
-        {canSend && (
-          <button
-            onClick={(e) => handleAction(e, 'send')}
-            className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
-            title="Send to Second Party"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        )}
+          {canSign && (
+            <DropdownMenuItem
+              onClick={(e) => handleAction(e, 'sign')}
+              icon={<FileSignature className="w-4 h-4" />}
+            >
+              Sign Contract
+            </DropdownMenuItem>
+          )}
 
-        {canDelete && (
-          <button
-            onClick={handleDeleteClick}
-            disabled={deleting}
-            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-            title="Delete Contract"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+          {canSend && (
+            <DropdownMenuItem
+              onClick={(e) => handleAction(e, 'send')}
+              icon={<Send className="w-4 h-4" />}
+            >
+              Send to Second Party
+            </DropdownMenuItem>
+          )}
+
+          {canDelete && (
+            <DropdownMenuItem
+              onClick={handleDeleteClick}
+              icon={<Trash2 className="w-4 h-4" />}
+              variant="danger"
+              disabled={deleting}
+            >
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenu>
       </div>
 
       {/* Delete Confirmation Modal */}

@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import axios from 'axios'
 import SignatureModal from '@/components/SignatureModal'
 import { LoadingButton } from '@/components/ui/loading-button'
-import { FileSignature, CheckCircle, ArrowLeft, Check } from 'lucide-react'
+import { FileSignature, CheckCircle, ArrowLeft, Check, PenTool } from 'lucide-react'
 
 interface Signature {
   id: string
@@ -169,8 +169,8 @@ export default function SignContractPage() {
             Back to Dashboard
           </button>
           <div className="text-center">
-            <div className="mb-4">
-              <span className="text-4xl">📝</span>
+            <div className="mb-4 inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full">
+              <PenTool className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">
               Lagos State Digital Signature Portal

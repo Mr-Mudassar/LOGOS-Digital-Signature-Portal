@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { FileCheck, Clock, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { FileCheck, Clock, ShieldCheck, AlertTriangle, BarChart3 } from 'lucide-react'
 
 interface AdminStats {
   totalPendingSignatures: number
@@ -62,7 +62,10 @@ export default function AdminStatsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <BarChart3 className="w-8 h-8 text-primary" />
+          Statistics
+        </h1>
         <p className="text-gray-600 mt-2">System-wide contract metrics across all users</p>
       </div>
 

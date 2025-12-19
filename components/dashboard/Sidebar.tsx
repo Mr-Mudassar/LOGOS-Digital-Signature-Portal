@@ -27,11 +27,11 @@ export default function Sidebar() {
     { name: 'MDA', href: '/admin/mda', icon: Building2 },
   ]
 
-  // User navigation - My Contracts, Pending Signature, Stats
+  // User navigation - Stats, My Contracts, Pending Signature
   const userNavigation = [
+    { name: 'Stats', href: '/dashboard/stats', icon: BarChart3 },
     { name: 'My Contracts', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Pending Signature', href: '/dashboard/pending-signature', icon: FileText },
-    { name: 'Stats', href: '/dashboard/stats', icon: BarChart3 },
   ]
 
   // Choose navigation based on role
