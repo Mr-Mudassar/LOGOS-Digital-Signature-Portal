@@ -42,15 +42,15 @@ export default function Sidebar() {
     }
   }
 
-  // Admin navigation - only Stats and MDA
+  // Admin navigation - only Dashboard and MDA
   const adminNavigation = [
-    { name: 'Stats', href: '/admin/stats', icon: BarChart3 },
+    { name: 'Dashboard', href: '/admin/stats', icon: BarChart3 },
     { name: 'MDA', href: '/admin/mda', icon: Building2 },
   ]
 
-  // User navigation - Stats, My Contracts, Pending Signature
+  // User navigation - Dashboard, My Contracts, Pending Signature
   const userNavigation = [
-    { name: 'Stats', href: '/user/dashboard/stats', icon: BarChart3 },
+    { name: 'Dashboard', href: '/user/dashboard/stats', icon: BarChart3 },
     { name: 'My Contracts', href: '/user/dashboard', icon: LayoutDashboard },
     { name: 'Pending Signature', href: '/user/dashboard/pending-signature', icon: FileText },
   ]
