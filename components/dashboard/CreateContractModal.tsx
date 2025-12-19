@@ -3,12 +3,29 @@
 import axios from 'axios'
 import { useState } from 'react'
 import { X, Upload } from 'lucide-react'
+import { z } from 'zod'
 
 interface CreateContractModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: (contractId: string) => void
 }
+
+// Zod validation schema
+const contractSchema = z.object({
+  title: z
+    .string()
+    .min(5, 'Title must be at least 5 characters')
+    .max(60, 'Title must not exceed 60 characters'),
+  initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
+  initiatorEmail: z.string().email('Invalid email address'),
+  receiverName: z.string().min(2, 'Name must be at least 2 characters'),
+  receiverEmail: z.string().email('Invalid email address'),
+  userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
+  category: z.string().min(1, 'Please select a category'),
+})
+
+type ContractFormData = z.infer<typeof contractSchema>
 
 export default function CreateContractModal({
   isOpen,
@@ -27,6 +44,7 @@ export default function CreateContractModal({
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const MDA_OPTIONS = [
     { value: 'HOUSING', label: 'Housing' },
@@ -37,6 +55,31 @@ export default function CreateContractModal({
   ]
 
   if (!isOpen) return null
+
+  const validateField = (fieldName: keyof ContractFormData, value: string) => {
+    try {
+      const fieldSchema = contractSchema.shape[fieldName]
+      fieldSchema.parse(value)
+      // Clear error if validation passes
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          [fieldName]: err.errors[0].message,
+        }))
+      }
+    }
+  }
+
+  const handleFieldChange = (fieldName: keyof ContractFormData, value: string) => {
+    setFormData({ ...formData, [fieldName]: value })
+    validateField(fieldName, value)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -62,18 +105,22 @@ export default function CreateContractModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setValidationErrors({})
     setLoading(true)
 
     try {
+      // Validate form data with Zod
+      const validatedData = contractSchema.parse(formData)
+
       // Step 1: Create the contract with names
       const contractResponse = await axios.post('/api/contracts', {
-        title: formData.title,
-        initiatorName: formData.initiatorName,
-        initiatorEmail: formData.initiatorEmail,
-        receiverName: formData.receiverName,
-        receiverEmail: formData.receiverEmail,
-        userContext: formData.userContext,
-        category: formData.category,
+        title: validatedData.title,
+        initiatorName: validatedData.initiatorName,
+        initiatorEmail: validatedData.initiatorEmail,
+        receiverName: validatedData.receiverName,
+        receiverEmail: validatedData.receiverEmail,
+        userContext: validatedData.userContext,
+        category: validatedData.category,
         referenceDocumentName: file?.name,
       })
 
@@ -82,9 +129,9 @@ export default function CreateContractModal({
       // Step 2: Generate contract using OpenAI
       const formDataObj = new FormData()
       formDataObj.append('contractId', contractId)
-      formDataObj.append('userContext', formData.userContext || '')
-      formDataObj.append('initiatorName', formData.initiatorName)
-      formDataObj.append('receiverName', formData.receiverName)
+      formDataObj.append('userContext', validatedData.userContext || '')
+      formDataObj.append('initiatorName', validatedData.initiatorName)
+      formDataObj.append('receiverName', validatedData.receiverName)
       if (file) {
         formDataObj.append('referenceDocument', file)
       }
@@ -98,6 +145,18 @@ export default function CreateContractModal({
       onSuccess(contractId)
       resetForm()
     } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        // Handle Zod validation errors
+        const errors: Record<string, string> = {}
+        err.errors.forEach((error) => {
+          if (error.path[0]) {
+            errors[error.path[0].toString()] = error.message
+          }
+        })
+        setValidationErrors(errors)
+        setLoading(false)
+        return
+      }
       setError(err.response?.data?.error || 'An error occurred while creating the contract')
     } finally {
       setLoading(false)
@@ -116,6 +175,7 @@ export default function CreateContractModal({
     })
     setFile(null)
     setError('')
+    setValidationErrors({})
   }
 
   const handleClose = () => {
@@ -159,11 +219,13 @@ export default function CreateContractModal({
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="input-field"
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                className={`input-field ${validationErrors.title ? 'border-red-500' : ''}`}
                 placeholder="e.g. Housing Lease Agreement for Flat 3B, Yaba"
-                required
               />
+              {validationErrors.title && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>
+              )}
             </div>
 
             {/* MDA Category */}
@@ -171,9 +233,8 @@ export default function CreateContractModal({
               <label className="label">MDA Category</label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="input-field"
-                required
+                onChange={(e) => handleFieldChange('category', e.target.value)}
+                className={`input-field ${validationErrors.category ? 'border-red-500' : ''}`}
               >
                 {MDA_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -181,6 +242,9 @@ export default function CreateContractModal({
                   </option>
                 ))}
               </select>
+              {validationErrors.category && (
+                <p className="text-red-500 text-xs mt-1">{validationErrors.category}</p>
+              )}
               <p className="text-xs text-gray-500 mt-1">
                 Select the Ministry, Department, or Agency this contract relates to
               </p>
@@ -212,47 +276,69 @@ export default function CreateContractModal({
             <div>
               <label className="label">Primary Party (Initiator)</label>
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  value={formData.initiatorName}
-                  onChange={(e) => setFormData({ ...formData, initiatorName: e.target.value })}
-                  className="input-field"
-                  placeholder="Full Name"
-                  required
-                />
-                <input
-                  type="email"
-                  value={formData.initiatorEmail}
-                  onChange={(e) => setFormData({ ...formData, initiatorEmail: e.target.value })}
-                  className="input-field"
-                  placeholder="Email Address"
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={formData.initiatorName}
+                    onChange={(e) => handleFieldChange('initiatorName', e.target.value)}
+                    className={`input-field ${
+                      validationErrors.initiatorName ? 'border-red-500' : ''
+                    }`}
+                    placeholder="Full Name"
+                  />
+                  {validationErrors.initiatorName && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.initiatorName}</p>
+                  )}
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    value={formData.initiatorEmail}
+                    onChange={(e) => handleFieldChange('initiatorEmail', e.target.value)}
+                    className={`input-field ${
+                      validationErrors.initiatorEmail ? 'border-red-500' : ''
+                    }`}
+                    placeholder="Email Address"
+                  />
+                  {validationErrors.initiatorEmail && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.initiatorEmail}</p>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Email is optional - Leave empty to use your account email
-              </p>
             </div>
 
             {/* Counterparty */}
             <div>
               <label className="label">Counterparty (Second Party)</label>
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  value={formData.receiverName}
-                  onChange={(e) => setFormData({ ...formData, receiverName: e.target.value })}
-                  className="input-field"
-                  placeholder="Full Name"
-                  required
-                />
-                <input
-                  type="email"
-                  value={formData.receiverEmail}
-                  onChange={(e) => setFormData({ ...formData, receiverEmail: e.target.value })}
-                  className="input-field"
-                  placeholder="Email Address"
-                  required
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={formData.receiverName}
+                    onChange={(e) => handleFieldChange('receiverName', e.target.value)}
+                    className={`input-field ${
+                      validationErrors.receiverName ? 'border-red-500' : ''
+                    }`}
+                    placeholder="Full Name"
+                  />
+                  {validationErrors.receiverName && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.receiverName}</p>
+                  )}
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    value={formData.receiverEmail}
+                    onChange={(e) => handleFieldChange('receiverEmail', e.target.value)}
+                    className={`input-field ${
+                      validationErrors.receiverEmail ? 'border-red-500' : ''
+                    }`}
+                    placeholder="Email Address"
+                  />
+                  {validationErrors.receiverEmail && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.receiverEmail}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -261,11 +347,20 @@ export default function CreateContractModal({
               <label className="label">Additional Context (Optional)</label>
               <textarea
                 value={formData.userContext}
-                onChange={(e) => setFormData({ ...formData, userContext: e.target.value })}
-                className="input-field"
+                onChange={(e) => handleFieldChange('userContext', e.target.value)}
+                className={`input-field ${validationErrors.userContext ? 'border-red-500' : ''}`}
                 rows={3}
                 placeholder="Add any additional context or instructions for the contract..."
+                maxLength={500}
               />
+              <div className="flex items-center justify-between mt-1">
+                {validationErrors.userContext && (
+                  <p className="text-red-500 text-xs">{validationErrors.userContext}</p>
+                )}
+                <p className="text-xs text-gray-500 ml-auto">
+                  {formData.userContext?.length || 0}/500
+                </p>
+              </div>
             </div>
           </div>
 

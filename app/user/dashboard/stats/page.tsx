@@ -15,15 +15,6 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin')
-    } else if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
-      // Redirect admin to their stats page
-      router.push('/admin/stats')
-    }
-  }, [status, router, session])
-
-  useEffect(() => {
     if (status === 'authenticated') {
       fetchContracts()
     }
@@ -41,7 +32,7 @@ export default function StatsPage() {
     }
   }
 
-  if (status === 'loading' || status === 'unauthenticated') {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

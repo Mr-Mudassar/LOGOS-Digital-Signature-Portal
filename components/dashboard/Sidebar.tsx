@@ -29,9 +29,9 @@ export default function Sidebar() {
 
   // User navigation - Stats, My Contracts, Pending Signature
   const userNavigation = [
-    { name: 'Stats', href: '/dashboard/stats', icon: BarChart3 },
-    { name: 'My Contracts', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Pending Signature', href: '/dashboard/pending-signature', icon: FileText },
+    { name: 'Stats', href: '/user/dashboard/stats', icon: BarChart3 },
+    { name: 'My Contracts', href: '/user/dashboard', icon: LayoutDashboard },
+    { name: 'Pending Signature', href: '/user/dashboard/pending-signature', icon: FileText },
   ]
 
   // Choose navigation based on role

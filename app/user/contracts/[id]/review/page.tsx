@@ -106,7 +106,7 @@ export default function ContractReviewPage() {
     try {
       await axios.post(`/api/contracts/${contractId}/send`)
       setShowSendConfirm(false)
-      router.push('/dashboard')
+      router.push('/user/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to send contract')
     } finally {
@@ -130,7 +130,7 @@ export default function ContractReviewPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">{error}</p>
-          <button onClick={() => router.push('/dashboard')} className="btn-primary mt-4">
+          <button onClick={() => router.push('/user/dashboard')} className="btn-primary mt-4">
             Back to Dashboard
           </button>
         </div>
@@ -148,7 +148,7 @@ export default function ContractReviewPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/user/dashboard')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

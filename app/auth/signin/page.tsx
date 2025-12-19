@@ -3,15 +3,25 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Shield } from 'lucide-react'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function SignInPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Redirect if already signed in
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const redirectUrl = session.user.role === 'ADMIN' ? '/admin/stats' : '/user/dashboard'
+      router.push(redirectUrl)
+    }
+  }, [status, session, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,13 +37,13 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError('Invalid email or password')
+        setLoading(false)
       } else {
-        router.push('/dashboard')
+        // Let the useEffect handle the redirect based on role
         router.refresh()
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
-    } finally {
       setLoading(false)
     }
   }

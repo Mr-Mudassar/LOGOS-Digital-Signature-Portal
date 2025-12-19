@@ -149,7 +149,7 @@ export default function SignContractPage() {
               <strong>Contract:</strong> {contract.title}
             </p>
           </div>
-          <button onClick={() => router.push('/dashboard')} className="btn-primary mt-6">
+          <button onClick={() => router.push('/user/dashboard')} className="btn-primary mt-6">
             Go to Dashboard
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function SignContractPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/user/dashboard')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
