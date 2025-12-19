@@ -5,22 +5,45 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import axios from 'axios'
 import { Shield, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+})
+
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+  })
+
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
     setError('')
-    setLoading(true)
 
     try {
-      const response = await axios.post('/api/auth/forgot-password', { email })
+      await axios.post('/api/auth/forgot-password', { email: data.email })
+      setSubmittedEmail(data.email)
       setSuccess(true)
     } catch (err: any) {
       if (err.response?.status === 403) {
@@ -28,8 +51,6 @@ export default function ForgotPasswordPage() {
       } else {
         setError('An error occurred. Please try again.')
       }
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -45,8 +66,8 @@ export default function ForgotPasswordPage() {
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Check Your Email</h1>
 
             <p className="text-gray-600 mb-6">
-              We&apos;ve sent a password reset link to <strong>{email}</strong>. Please check your
-              inbox and follow the instructions to reset your password.
+              We&apos;ve sent a password reset link to <strong>{submittedEmail}</strong>. Please
+              check your inbox and follow the instructions to reset your password.
             </p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
@@ -99,40 +120,46 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                  placeholder="your.email@example.com"
-                  required
-                  autoFocus
-                />
-              </div>
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Input
+                          type="email"
+                          placeholder="your.email@example.com"
+                          className="pl-10"
+                          autoFocus
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send Reset Link
-                </>
-              )}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Reset Link
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
 
           <div className="mt-6 text-center">
             <Link
