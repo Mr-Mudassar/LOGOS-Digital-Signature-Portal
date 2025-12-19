@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Shield } from 'lucide-react'
+import { Shield, Fingerprint } from 'lucide-react'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -59,13 +60,20 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError('Invalid email or password')
+        toast.error('Invalid email or password')
       } else {
+        toast.success('Successfully signed in!')
         // Let the useEffect handle the redirect based on role
         router.refresh()
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
+      toast.error('An error occurred. Please try again.')
     }
+  }
+
+  const handleMyIDLogin = () => {
+    toast.info('This feature is not implemented yet')
   }
 
   return (
@@ -127,10 +135,24 @@ export default function SignInPage() {
               </div>
 
               <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-                {form.formState.isSubmitting ? 'Signing in...' : 'Login with myID'}
+                {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
           </Form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <Button type="button" variant="outline" className="w-full" onClick={handleMyIDLogin}>
+            <Fingerprint className="w-4 h-4 mr-2" />
+            Login with my ID
+          </Button>
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Don&apos;t have an account?{' '}

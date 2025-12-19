@@ -8,6 +8,7 @@ import { Shield, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -45,11 +46,14 @@ export default function ForgotPasswordPage() {
       await axios.post('/api/auth/forgot-password', { email: data.email })
       setSubmittedEmail(data.email)
       setSuccess(true)
+      toast.success('Password reset link sent to your email!')
     } catch (err: any) {
       if (err.response?.status === 403) {
         setError(err.response.data.error)
+        toast.error(err.response.data.error)
       } else {
         setError('An error occurred. Please try again.')
+        toast.error('An error occurred. Please try again.')
       }
     }
   }

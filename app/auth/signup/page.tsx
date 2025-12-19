@@ -8,6 +8,7 @@ import axios from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -57,9 +58,12 @@ export default function SignUpPage() {
         name: data.name,
       })
 
+      toast.success('Account created successfully! Please sign in.')
       router.push('/auth/signin?message=Account created successfully. Please sign in.')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'An error occurred. Please try again.')
+      const errorMessage = err.response?.data?.error || 'An error occurred. Please try again.'
+      setError(errorMessage)
+      toast.error(errorMessage)
     }
   }
 

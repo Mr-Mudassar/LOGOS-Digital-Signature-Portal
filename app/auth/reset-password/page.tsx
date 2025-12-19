@@ -8,6 +8,7 @@ import { Shield, Lock, CheckCircle, AlertTriangle, Eye, EyeOff } from 'lucide-re
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -85,6 +86,7 @@ function ResetPasswordForm() {
         password: data.password,
       })
       setSuccess(true)
+      toast.success('Password reset successful!')
 
       // Redirect to sign in after 3 seconds
       setTimeout(() => {
@@ -93,8 +95,10 @@ function ResetPasswordForm() {
     } catch (err: any) {
       if (err.response?.data?.error) {
         setError(err.response.data.error)
+        toast.error(err.response.data.error)
       } else {
         setError('An error occurred. Please try again.')
+        toast.error('An error occurred. Please try again.')
       }
     }
   }

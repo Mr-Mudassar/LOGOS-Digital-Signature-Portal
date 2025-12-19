@@ -6,6 +6,7 @@ import { X, Upload } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -110,6 +111,8 @@ export default function CreateContractModal({
 
       const contractId = contractResponse.data.contract.id
 
+      toast.loading('Generating contract...', { id: 'contract-generation' })
+
       // Step 2: Generate contract using OpenAI
       const formDataObj = new FormData()
       formDataObj.append('contractId', contractId)
@@ -126,10 +129,14 @@ export default function CreateContractModal({
         },
       })
 
+      toast.success('Contract created successfully!', { id: 'contract-generation' })
       onSuccess(contractId)
       resetForm()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'An error occurred while creating the contract')
+      const errorMessage =
+        err.response?.data?.error || 'An error occurred while creating the contract'
+      setError(errorMessage)
+      toast.error(errorMessage, { id: 'contract-generation' })
     }
   }
 

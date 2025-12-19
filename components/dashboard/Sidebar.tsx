@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
+import { toast } from 'sonner'
 import {
   Shield,
   LayoutDashboard,
@@ -14,12 +15,32 @@ import {
   Building2,
   ShieldCheck,
 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
 
   const isAdmin = session?.user?.role === 'ADMIN'
+
+  const handleSignOut = async () => {
+    try {
+      toast.success('Signed out successfully!')
+      await signOut({ callbackUrl: '/auth/signin' })
+    } catch (error) {
+      toast.error('Failed to sign out')
+    }
+  }
 
   // Admin navigation - only Stats and MDA
   const adminNavigation = [
@@ -75,13 +96,27 @@ export default function Sidebar() {
 
       {/* User Section */}
       <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 w-full transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          Sign Out
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 w-full transition-colors">
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will be redirected to the sign-in page and will need to log in again to access
+                your account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

@@ -21,6 +21,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
+    // Get total contracts (all contracts regardless of status)
+    const totalContracts = await prisma.contract.count()
+
     // Get total pending signatures (contracts awaiting signature)
     const totalPendingSignatures = await prisma.contract.count({
       where: {
@@ -46,6 +49,7 @@ export async function GET() {
     const suspiciousEvents = 0
 
     return NextResponse.json({
+      totalContracts,
       totalPendingSignatures,
       completedLast30Days,
       verifiedDocuments,

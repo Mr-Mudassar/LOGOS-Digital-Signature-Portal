@@ -91,8 +91,9 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
   return (
     <div className="grid grid-cols-6 gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group">
       <div className="cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <p className="font-medium text-gray-900">{contract.title}</p>
-        <p className="text-sm text-gray-600">#{contract.id.slice(0, 8)}</p>
+        <p className="font-medium text-gray-900 truncate" title={contract.title}>
+          {contract.title}
+        </p>
       </div>
 
       <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
