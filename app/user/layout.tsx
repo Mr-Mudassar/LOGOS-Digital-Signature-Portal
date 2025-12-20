@@ -16,7 +16,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
     // Redirect admin users to admin dashboard
     if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
-      router.push('/admin/stats')
+      router.push('/admin/dashboard')
     }
   }, [status, session, router])
 

@@ -23,7 +23,7 @@ interface SendContractCompletionParams {
  */
 export async function sendContractInvitation(params: SendContractInvitationParams) {
   const { receiverEmail, receiverName, initiatorName, contractTitle, signingLink } = params
-  const signingUrl = `${process.env.APP_URL}/sign/${signingLink}`
+  const signingUrl = `${process.env.APP_URL}/user/pending-signature?signingLink=${signingLink}`
 
   const msg = {
     to: receiverEmail,

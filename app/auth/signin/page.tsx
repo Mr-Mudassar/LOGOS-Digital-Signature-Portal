@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Shield, Fingerprint } from 'lucide-react'
+import { Shield, Fingerprint, Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
 import { signIn, useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -29,8 +29,11 @@ type SignInFormValues = z.infer<typeof signInSchema>
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl')
   const { data: session, status } = useSession()
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -43,10 +46,14 @@ export default function SignInPage() {
   // Redirect if already signed in
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
-      const redirectUrl = session.user.role === 'ADMIN' ? '/admin/stats' : '/user/dashboard'
-      router.push(redirectUrl)
+      if (callbackUrl) {
+        router.push(callbackUrl)
+      } else {
+        const redirectUrl = session.user.role === 'ADMIN' ? '/admin/dashboard' : '/user/dashboard'
+        router.push(redirectUrl)
+      }
     }
-  }, [status, session, router])
+  }, [status, session, router, callbackUrl])
 
   const onSubmit = async (data: SignInFormValues) => {
     setError('')
@@ -63,8 +70,12 @@ export default function SignInPage() {
         toast.error('Invalid email or password')
       } else {
         toast.success('Successfully signed in!')
-        // Let the useEffect handle the redirect based on role
-        router.refresh()
+        // Redirect to callbackUrl if provided, otherwise let useEffect handle it
+        if (callbackUrl) {
+          router.push(callbackUrl)
+        } else {
+          router.refresh()
+        }
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -107,7 +118,15 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter your email" {...field} />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,7 +140,26 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Enter your password"
+                          className="pl-10 pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,6 +173,7 @@ export default function SignInPage() {
               </div>
 
               <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
+                <LogIn className="w-4 h-4 mr-2" />
                 {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>

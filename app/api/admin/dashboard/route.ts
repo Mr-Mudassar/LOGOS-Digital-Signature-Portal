@@ -24,6 +24,13 @@ export async function GET() {
     // Get total contracts (all contracts regardless of status)
     const totalContracts = await prisma.contract.count()
 
+    // Get total draft contracts
+    const totalDrafts = await prisma.contract.count({
+      where: {
+        status: 'DRAFT',
+      },
+    })
+
     // Get total pending signatures (contracts awaiting signature)
     const totalPendingSignatures = await prisma.contract.count({
       where: {
@@ -50,6 +57,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalContracts,
+      totalDrafts,
       totalPendingSignatures,
       completedLast30Days,
       verifiedDocuments,

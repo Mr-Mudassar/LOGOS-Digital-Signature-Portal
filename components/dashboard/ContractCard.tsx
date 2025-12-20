@@ -89,7 +89,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
     contract.signatures?.some((s: any) => s.type === 'INITIATOR') && contract.status === 'DRAFT'
 
   return (
-    <div className="grid grid-cols-6 gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group">
+    <div className="grid grid-cols-7 gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group">
       <div className="cursor-pointer" onClick={() => onOpenContract(contract.id)}>
         <p className="font-medium text-gray-900 truncate" title={contract.title}>
           {contract.title}
@@ -105,14 +105,28 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
       </div>
 
       <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <p className="text-gray-700">{getProvider()}</p>
+        <div className="min-w-0">
+          <p className="text-gray-700 truncate">{contract.initiator.name || 'Unknown'}</p>
+          {contract.initiator.email && (
+            <p className="text-xs text-gray-500 truncate">{contract.initiator.email}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <p className="text-sm text-gray-600">{formatDateTime(contract.updatedAt)}</p>
+        <div className="min-w-0">
+          <p className="text-gray-700 truncate">{contract.receiverName || 'Not assigned'}</p>
+          {contract.receiverEmail && (
+            <p className="text-xs text-gray-500 truncate">{contract.receiverEmail}</p>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
+        <p className="text-sm text-gray-600 truncate">{formatDateTime(contract.updatedAt)}</p>
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
         <DropdownMenu
           trigger={
             <button
@@ -175,7 +189,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
       />
 
       {deleteError && (
-        <div className="col-span-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="col-span-7 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {deleteError}
         </div>
       )}

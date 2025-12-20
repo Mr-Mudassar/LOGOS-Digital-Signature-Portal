@@ -2,10 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { FileCheck, Clock, ShieldCheck, AlertTriangle, BarChart3, FileText } from 'lucide-react'
+import {
+  FileCheck,
+  Clock,
+  ShieldCheck,
+  AlertTriangle,
+  BarChart3,
+  FileText,
+  FilePenLine,
+} from 'lucide-react'
 
 interface AdminStats {
   totalContracts: number
+  totalDrafts: number
   totalPendingSignatures: number
   completedLast30Days: number
   verifiedDocuments: number
@@ -24,7 +33,7 @@ export default function AdminStatsPage() {
   const fetchStats = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/admin/stats')
+      const response = await axios.get('/api/admin/dashboard')
       setStats(response.data)
     } catch (err: any) {
       if (err.response?.status === 403) {
@@ -84,6 +93,20 @@ export default function AdminStatsPage() {
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-4">All contracts</p>
+          </div>
+
+          {/* Draft Contracts */}
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Draft Contracts</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalDrafts}</p>
+              </div>
+              <div className="p-3 bg-gray-100 rounded-full">
+                <FilePenLine className="w-8 h-8 text-gray-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">Not yet sent</p>
           </div>
 
           {/* Total Pending Signatures */}

@@ -42,17 +42,18 @@ export default function Sidebar() {
     }
   }
 
-  // Admin navigation - only Dashboard and MDA
+  // Admin navigation - Dashboard, All Contracts, and MDA
   const adminNavigation = [
-    { name: 'Dashboard', href: '/admin/stats', icon: BarChart3 },
+    { name: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
+    { name: 'All Contracts', href: '/admin/all-contracts', icon: FileText },
     { name: 'MDA', href: '/admin/mda', icon: Building2 },
   ]
 
   // User navigation - Dashboard, My Contracts, Pending Signature
   const userNavigation = [
-    { name: 'Dashboard', href: '/user/dashboard/stats', icon: BarChart3 },
-    { name: 'My Contracts', href: '/user/dashboard', icon: LayoutDashboard },
-    { name: 'Pending Signature', href: '/user/dashboard/pending-signature', icon: FileText },
+    { name: 'Dashboard', href: '/user/dashboard', icon: BarChart3 },
+    { name: 'My Contracts', href: '/user/all-contracts', icon: LayoutDashboard },
+    { name: 'Pending Signature', href: '/user/pending-signature', icon: FileText },
   ]
 
   // Choose navigation based on role

@@ -3,39 +3,54 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Shield, FileSignature } from 'lucide-react'
+import { Shield, Plus, FileText, Clock } from 'lucide-react'
 import axios from 'axios'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ContractCard from '@/components/dashboard/ContractCard'
+import CreateContractModal from '@/components/dashboard/CreateContractModal'
 import ContractViewSheet from '@/components/ContractViewSheet'
 
-export default function PendingSignaturePage() {
+export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<string>('all')
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchPendingContracts()
+      fetchContracts()
     }
-  }, [status])
+  }, [status, filter])
 
-  const fetchPendingContracts = async () => {
+  const fetchContracts = async () => {
     try {
       setLoading(true)
-      // Call the dedicated API endpoint for pending signatures
-      const response = await axios.get('/api/contracts/pending-signature')
-      setContracts(response.data.contracts)
+      const url = filter === 'all' ? '/api/contracts' : `/api/contracts?status=${filter}`
+      const response = await axios.get(url)
+      const fetchedContracts = response.data.contracts
+
+      setContracts(fetchedContracts)
     } catch (error) {
-      console.error('Error fetching pending signature contracts:', error)
+      console.error('Error fetching contracts:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleContractCreated = (contractId: string) => {
+    setIsModalOpen(false)
+    setSelectedContractId(contractId)
+    setIsSheetOpen(true)
+    fetchContracts()
   }
 
   const handleOpenContract = (contractId: string) => {
@@ -53,6 +68,11 @@ export default function PendingSignaturePage() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedContracts = contracts.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter])
 
   if (status === 'loading') {
     return (
@@ -77,26 +97,75 @@ export default function PendingSignaturePage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FileSignature className="w-8 h-8 text-primary" />
-                Pending Signature
+                <FileText className="w-8 h-8 text-primary" />
+                My Contracts
               </h1>
               <p className="text-gray-600 mt-1">
-                Contracts shared with you that require your signature
+                Manage your contracts, signatures, and pending documents.
               </p>
             </div>
+            {!isAdmin && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                New Contract
+              </button>
+            )}
           </div>
 
-          {/* Contracts List */}
+          {/* Recent Activities */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-2 mb-2">
-                <FileSignature className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-semibold">Awaiting Your Signature</h2>
+              <div className="flex items-center gap-2 mb-6">
+                <Clock className="w-6 h-6 text-primary" />
+                <h2 className="text-xl font-semibold">Recent Activities</h2>
               </div>
-              <p className="text-sm text-gray-600">
-                {contracts.length} {contracts.length === 1 ? 'contract' : 'contracts'} waiting for
-                your review and signature
-              </p>
+
+              {/* Filter Tabs */}
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === 'all'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setFilter('DRAFT')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === 'DRAFT'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Drafts
+                </button>
+                <button
+                  onClick={() => setFilter('AWAITING_SIGNATURE')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === 'AWAITING_SIGNATURE'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Awaiting Signature
+                </button>
+                <button
+                  onClick={() => setFilter('COMPLETED')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === 'COMPLETED'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Completed
+                </button>
+              </div>
             </div>
 
             <div className="p-6">
@@ -107,29 +176,27 @@ export default function PendingSignaturePage() {
                 </div>
               ) : contracts.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-gray-400 mb-4">
-                    <FileSignature className="w-16 h-16 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Signatures</h3>
-                  <p className="text-gray-600">
-                    You don&apos;t have any contracts waiting for your signature at the moment.
-                  </p>
+                  <p className="text-gray-600">No contracts found</p>
+                  <button onClick={() => setIsModalOpen(true)} className="btn-primary mt-4">
+                    Create Your First Contract
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-6 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
+                  <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
                     <div>Contract</div>
                     <div>Type</div>
                     <div>Status</div>
-                    <div>Sent By</div>
-                    <div>Received</div>
-                    <div className="text-right">Actions</div>
+                    <div>Provider</div>
+                    <div>Receiver</div>
+                    <div>Created</div>
+                    <div className="text-center">Actions</div>
                   </div>
                   {paginatedContracts.map((contract) => (
                     <ContractCard
                       key={contract.id}
                       contract={contract}
-                      onUpdate={fetchPendingContracts}
+                      onUpdate={fetchContracts}
                       onOpenContract={handleOpenContract}
                     />
                   ))}
@@ -187,11 +254,17 @@ export default function PendingSignaturePage() {
         </div>
       </div>
 
+      <CreateContractModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleContractCreated}
+      />
+
       <ContractViewSheet
         isOpen={isSheetOpen}
         onClose={handleCloseSheet}
         contractId={selectedContractId}
-        onUpdate={fetchPendingContracts}
+        onUpdate={fetchContracts}
       />
     </div>
   )

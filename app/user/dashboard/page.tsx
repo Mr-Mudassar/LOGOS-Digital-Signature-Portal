@@ -3,86 +3,33 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Shield, Plus, FileText, Clock } from 'lucide-react'
+import { Shield, BarChart3, FilePenLine, Clock, FileCheck, FileText } from 'lucide-react'
 import axios from 'axios'
 import Sidebar from '@/components/dashboard/Sidebar'
-import ContractCard from '@/components/dashboard/ContractCard'
-import CreateContractModal from '@/components/dashboard/CreateContractModal'
-import ContractViewSheet from '@/components/ContractViewSheet'
 
-export default function DashboardPage() {
+export default function StatsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<string>('all')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
 
-  const isAdmin = session?.user?.role === 'ADMIN'
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (status === 'authenticated') {
       fetchContracts()
     }
-  }, [status, filter])
+  }, [status])
 
   const fetchContracts = async () => {
     try {
       setLoading(true)
-      const url = filter === 'all' ? '/api/contracts' : `/api/contracts?status=${filter}`
-      const response = await axios.get(url)
-      let fetchedContracts = response.data.contracts
-
-      // Filter for pending-to-sign: contracts that need the current user's signature
-      if (filter === 'pending-to-sign') {
-        fetchedContracts = fetchedContracts.filter(
-          (contract: any) =>
-            contract.status === 'AWAITING_SIGNATURE' &&
-            contract.receiverId === session?.user?.id &&
-            !contract.signatures?.some((sig: any) => sig.type === 'RECEIVER')
-        )
-      }
-
-      setContracts(fetchedContracts)
+      const response = await axios.get('/api/contracts')
+      setContracts(response.data.contracts)
     } catch (error) {
       console.error('Error fetching contracts:', error)
     } finally {
       setLoading(false)
     }
   }
-
-  const handleContractCreated = (contractId: string) => {
-    setIsModalOpen(false)
-    setSelectedContractId(contractId)
-    setIsSheetOpen(true)
-    fetchContracts()
-  }
-
-  const handleOpenContract = (contractId: string) => {
-    setSelectedContractId(contractId)
-    setIsSheetOpen(true)
-  }
-
-  const handleCloseSheet = () => {
-    setIsSheetOpen(false)
-    setSelectedContractId(null)
-  }
-
-  // Pagination calculations
-  const totalPages = Math.ceil(contracts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedContracts = contracts.slice(startIndex, endIndex)
-
-  // Reset to page 1 when filter changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [filter])
 
   if (status === 'loading') {
     return (
@@ -97,6 +44,13 @@ export default function DashboardPage() {
     )
   }
 
+  const stats = {
+    drafts: contracts.filter((c) => c.status === 'DRAFT').length,
+    pending: contracts.filter((c) => c.status === 'AWAITING_SIGNATURE').length,
+    completed: contracts.filter((c) => c.status === 'COMPLETED').length,
+    total: contracts.length,
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -107,184 +61,80 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FileText className="w-8 h-8 text-primary" />
-                My Contracts
+                <BarChart3 className="w-8 h-8 text-primary" />
+                My Statistics
               </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your contracts, signatures, and pending documents.
-              </p>
+              <p className="text-gray-600 mt-1">Your personal contract statistics and metrics</p>
             </div>
-            {!isAdmin && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                New Contract
-              </button>
-            )}
           </div>
 
-          {/* Recent Activities */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-2 mb-6">
-                <Clock className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-semibold">Recent Activities</h2>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'all'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('DRAFT')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'DRAFT'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Drafts
-                </button>
-                <button
-                  onClick={() => setFilter('pending-to-sign')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'pending-to-sign'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Pending My Signature
-                </button>
-                <button
-                  onClick={() => setFilter('AWAITING_SIGNATURE')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'AWAITING_SIGNATURE'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Awaiting Others
-                </button>
-                <button
-                  onClick={() => setFilter('COMPLETED')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'COMPLETED'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Completed
-                </button>
-              </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading statistics...</p>
             </div>
-
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading contracts...</p>
-                </div>
-              ) : contracts.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600">No contracts found</p>
-                  <button onClick={() => setIsModalOpen(true)} className="btn-primary mt-4">
-                    Create Your First Contract
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-6 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
-                    <div>Contract</div>
-                    <div>Type</div>
-                    <div>Status</div>
-                    <div>Provider</div>
-                    <div>Updated</div>
-                    <div className="text-right">Actions</div>
+          ) : (
+            /* Stats Cards */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Draft Contracts */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Draft Contracts</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.drafts}</p>
                   </div>
-                  {paginatedContracts.map((contract) => (
-                    <ContractCard
-                      key={contract.id}
-                      contract={contract}
-                      onUpdate={fetchContracts}
-                      onOpenContract={handleOpenContract}
-                    />
-                  ))}
-
-                  {/* Pagination Controls */}
-                  {contracts.length > 0 && (
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Items per page:</span>
-                        <select
-                          value={itemsPerPage}
-                          onChange={(e) => {
-                            setItemsPerPage(Number(e.target.value))
-                            setCurrentPage(1)
-                          }}
-                          className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value={10}>10</option>
-                          <option value={20}>20</option>
-                          <option value={30}>30</option>
-                          <option value={40}>40</option>
-                          <option value={50}>50</option>
-                        </select>
-                        <span className="text-sm text-gray-600 ml-4">
-                          Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
-                          {contracts.length}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                          disabled={currentPage === 1}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="text-sm text-gray-600">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                          disabled={currentPage === totalPages}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="p-3 bg-gray-100 rounded-full">
+                    <FilePenLine className="w-8 h-8 text-gray-600" />
+                  </div>
                 </div>
-              )}
+                <p className="text-xs text-gray-500 mt-4">Not yet sent</p>
+              </div>
+
+              {/* Pending Signatures */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending Signatures</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.pending}</p>
+                  </div>
+                  <div className="p-3 bg-yellow-100 rounded-full">
+                    <Clock className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4">Awaiting signature</p>
+              </div>
+
+              {/* Completed Contracts */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Completed Contracts</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.completed}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <FileCheck className="w-8 h-8 text-green-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4">All time</p>
+              </div>
+
+              {/* Total Contracts */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Contracts</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4">All contracts</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
-
-      <CreateContractModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleContractCreated}
-      />
-
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseSheet}
-        contractId={selectedContractId}
-        onUpdate={fetchContracts}
-      />
     </div>
   )
 }

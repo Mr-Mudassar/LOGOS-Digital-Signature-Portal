@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Input } from '@/components/ui/input'
 import {
   Form,
@@ -345,9 +346,13 @@ export default function CreateContractModal({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Creating...' : 'Continue to Workflow Setup'}
-                </Button>
+                <LoadingButton
+                  type="submit"
+                  loading={form.formState.isSubmitting}
+                  loadingText="Generating..."
+                >
+                  Generate Contract
+                </LoadingButton>
               </div>
             </form>
           </Form>

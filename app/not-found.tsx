@@ -9,7 +9,7 @@ export default function NotFound() {
         <p className="text-gray-600 mb-6">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <Link href="/dashboard" className="btn-primary inline-block">
+        <Link href="/" className="btn-primary inline-block">
           Go to Dashboard
         </Link>
       </div>

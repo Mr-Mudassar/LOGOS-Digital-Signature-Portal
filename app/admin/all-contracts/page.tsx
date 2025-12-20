@@ -1,0 +1,357 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import { FileText, Filter, Eye } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import ContractViewSheet from '@/components/ContractViewSheet'
+
+interface Contract {
+  id: string
+  title: string
+  status: string
+  category: string
+  createdAt: string
+  receiverName: string
+  receiverEmail: string
+  initiator: {
+    name: string | null
+    email: string
+  }
+  receiver: {
+    name: string | null
+    email: string
+  } | null
+}
+
+const STATUS_FILTERS = [
+  { key: 'ALL', label: 'All Contracts' },
+  { key: 'DRAFT', label: 'Draft' },
+  { key: 'AWAITING_SIGNATURE', label: 'Awaiting Signature' },
+  { key: 'COMPLETED', label: 'Completed' },
+]
+
+export default function AdminAllContractsPage() {
+  const [selectedStatus, setSelectedStatus] = useState('ALL')
+  const [contracts, setContracts] = useState<Contract[]>([])
+  const [loading, setLoading] = useState(true)
+  const [fetchingData, setFetchingData] = useState(false)
+  const [viewingContractId, setViewingContractId] = useState<string | null>(null)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchContracts()
+  }, [])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchContracts()
+  }, [selectedStatus])
+
+  // Reset to page 1 when status changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedStatus])
+
+  const fetchContracts = async () => {
+    try {
+      if (contracts.length > 0) {
+        setFetchingData(true)
+      } else {
+        setLoading(true)
+      }
+
+      const response = await axios.get('/api/admin/contracts', {
+        params: { status: selectedStatus !== 'ALL' ? selectedStatus : undefined },
+      })
+      setContracts(response.data.contracts)
+    } catch (error) {
+      console.error('Failed to fetch contracts:', error)
+    } finally {
+      setLoading(false)
+      setFetchingData(false)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      DRAFT: 'bg-gray-100 text-gray-800',
+      AWAITING_SIGNATURE: 'bg-yellow-100 text-yellow-800',
+      COMPLETED: 'bg-green-100 text-green-800',
+    }
+    return styles[status as keyof typeof styles] || styles.DRAFT
+  }
+
+  const getStatusLabel = (status: string) => {
+    return status.replace(/_/g, ' ')
+  }
+
+  const handleViewContract = (contractId: string) => {
+    setViewingContractId(contractId)
+    setIsSheetOpen(true)
+  }
+
+  const handleCloseView = () => {
+    setViewingContractId(null)
+    setIsSheetOpen(false)
+  }
+
+  // Pagination calculations
+  const totalPages = Math.ceil(contracts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContracts = contracts.slice(startIndex, endIndex)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading contracts...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <FileText className="w-8 h-8 text-primary" />
+          All Contracts
+        </h1>
+        <p className="text-gray-600 mt-2">View and manage all contracts across the system</p>
+      </div>
+
+      {/* Status Filter */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Filter className="w-5 h-5 text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {STATUS_FILTERS.map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setSelectedStatus(filter.key)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                selectedStatus === filter.key
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <p className="text-sm text-gray-600">Total</p>
+          <p className="text-2xl font-bold text-gray-900">{contracts.length}</p>
+        </div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <p className="text-sm text-gray-600">Draft</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {contracts.filter((c) => c.status === 'DRAFT').length}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <p className="text-sm text-gray-600">Pending</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {contracts.filter((c) => c.status === 'AWAITING_SIGNATURE').length}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <p className="text-sm text-gray-600">Completed</p>
+          <p className="text-2xl font-bold text-green-600">
+            {contracts.filter((c) => c.status === 'COMPLETED').length}
+          </p>
+        </div>
+      </div>
+
+      {/* Contracts Table */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {selectedStatus === 'ALL'
+                  ? 'All Contracts'
+                  : STATUS_FILTERS.find((f) => f.key === selectedStatus)?.label}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {contracts.length} {contracts.length === 1 ? 'contract' : 'contracts'} found
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {fetchingData && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading contracts...</p>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          {contracts.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No contracts found</h3>
+              <p className="text-gray-600">
+                {selectedStatus === 'ALL'
+                  ? 'No contracts available in the system.'
+                  : `No contracts with status: ${getStatusLabel(selectedStatus)}`}
+              </p>
+            </div>
+          ) : (
+            <>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contract Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Initiator
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Receiver
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedContracts.map((contract) => (
+                    <tr key={contract.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{contract.title}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-600">
+                          {contract.category?.replace(/_/g, ' ') || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {contract.initiator.name || 'Unknown'}
+                        </div>
+                        <div className="text-xs text-gray-500">{contract.initiator.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {contract.receiver?.name || contract.receiverName || 'Not assigned'}
+                        </div>
+                        {(contract.receiver?.email || contract.receiverEmail) && (
+                          <div className="text-xs text-gray-500">
+                            {contract.receiver?.email || contract.receiverEmail}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
+                            contract.status
+                          )}`}
+                        >
+                          {getStatusLabel(contract.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {new Date(contract.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewContract(contract.id)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {contracts.length > 0 && (
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Items per page:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value))
+                        setCurrentPage(1)
+                      }}
+                      className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600 ml-4">
+                      Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
+                      {contracts.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Contract View Sheet */}
+      <ContractViewSheet
+        isOpen={isSheetOpen}
+        onClose={handleCloseView}
+        contractId={viewingContractId}
+        onUpdate={fetchContracts}
+      />
+    </div>
+  )
+}
