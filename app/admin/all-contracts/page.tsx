@@ -14,6 +14,7 @@ interface Contract {
   createdAt: string
   receiverName: string
   receiverEmail: string
+  pdfUrl?: string | null
   initiator: {
     name: string | null
     email: string
@@ -331,14 +332,27 @@ export default function AdminAllContractsPage() {
                         {new Date(contract.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewContract(contract.id)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewContract(contract.id)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          {contract.pdfUrl && contract.status === 'COMPLETED' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(contract.pdfUrl!, '_blank')}
+                              title="Download PDF"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              PDF
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

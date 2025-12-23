@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateContractPDFWithRetry } from '@/lib/pdf-generator-new'
+import { uploadToS3WithRetry } from '@/lib/s3-upload'
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -136,7 +138,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       newStatus = 'COMPLETED'
     }
 
-    await prisma.contract.update({
+    const updatedContract = await prisma.contract.update({
       where: { id },
       data: {
         status: newStatus,
@@ -144,8 +146,49 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       },
     })
 
+    // Generate PDF and upload to S3 when contract is completed
+    let pdfUrl: string | null = null
+    if (newStatus === 'COMPLETED' && updatedContent) {
+      try {
+        console.log(`Generating PDF for completed contract: ${id}`)
+
+        // Generate PDF with retry logic
+        const pdfBuffer = await generateContractPDFWithRetry({
+          contractTitle: contract.title,
+          htmlContent: updatedContent,
+          category: contract.category,
+          createdAt: contract.createdAt,
+        })
+
+        console.log(`PDF generated successfully for contract: ${id}`)
+
+        // Sanitize filename
+        const sanitizedTitle = contract.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+        const fileName = `${sanitizedTitle}-${Date.now()}.pdf`
+
+        // Upload to S3 with retry logic
+        pdfUrl = await uploadToS3WithRetry(pdfBuffer, fileName, 'application/pdf')
+
+        console.log(`PDF uploaded to S3: ${pdfUrl}`)
+
+        // Update contract with PDF URL
+        await prisma.contract.update({
+          where: { id },
+          data: { pdfUrl },
+        })
+      } catch (error) {
+        console.error('PDF generation or upload failed:', error)
+        // Don't fail the signing process if PDF generation fails
+        // The PDF can be regenerated later if needed
+      }
+    }
+
     return NextResponse.json(
-      { message: 'Signature saved successfully', status: newStatus },
+      {
+        message: 'Signature saved successfully',
+        status: newStatus,
+        pdfUrl: pdfUrl || undefined,
+      },
       { status: 200 }
     )
   } catch (error) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { formatDateTime } from '@/lib/utils'
-import { Eye, Trash2, Send, FileSignature, MoreVertical } from 'lucide-react'
+import { Eye, Trash2, Send, FileSignature, MoreVertical, Download } from 'lucide-react'
 import { useState } from 'react'
 import axios from 'axios'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -148,6 +148,18 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
           >
             View
           </DropdownMenuItem>
+
+          {contract.pdfUrl && contract.status === 'COMPLETED' && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation()
+                window.open(contract.pdfUrl, '_blank')
+              }}
+              icon={<Download className="w-4 h-4" />}
+            >
+              Download PDF
+            </DropdownMenuItem>
+          )}
 
           {canSign && (
             <DropdownMenuItem

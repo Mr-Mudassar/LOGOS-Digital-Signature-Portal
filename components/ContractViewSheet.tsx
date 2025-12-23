@@ -13,7 +13,7 @@ import {
 import ConfirmationModal from './ConfirmationModal'
 import ContractEditor from './ContractEditor'
 import { LoadingButton } from './ui/loading-button'
-import { Edit, FileSignature, Send, X, Check } from 'lucide-react'
+import { Edit, FileSignature, Send, X, Check, Download } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Signature {
@@ -42,6 +42,7 @@ interface Contract {
   signatures: Signature[]
   createdAt: string
   updatedAt: string
+  pdfUrl?: string | null
 }
 
 interface ContractViewSheetProps {
@@ -259,6 +260,18 @@ export default function ContractViewSheet({
               <>
                 {/* Action Buttons */}
                 <div className="flex gap-3 justify-end border-b pb-4">
+                  {contract.pdfUrl && contract.status === 'COMPLETED' && (
+                    <>
+                      <LoadingButton
+                        onClick={() => window.open(contract.pdfUrl!, '_blank')}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                      </LoadingButton>
+                    </>
+                  )}
                   {canEdit && !isEditing && (
                     <>
                       <LoadingButton

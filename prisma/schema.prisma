@@ -61,6 +61,7 @@ model Contract {
   userContext           String? @db.Text
   aiGeneratedContent    String? @db.Text
   finalDocumentUrl      String?
+  pdfUrl                String? // S3 URL for generated PDF
 
   // Parties
   initiatorId    String
