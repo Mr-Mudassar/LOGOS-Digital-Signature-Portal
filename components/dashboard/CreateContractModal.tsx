@@ -77,15 +77,25 @@ export default function CreateContractModal({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
 
-      // Validate file type
-      if (!selectedFile.type.includes('pdf') && !selectedFile.type.includes('document')) {
-        setError('Please upload a PDF or DOCX file')
+      // Validate file type - only accept DOCX
+      const fileName = selectedFile.name.toLowerCase()
+      const isDocx =
+        fileName.endsWith('.docx') ||
+        selectedFile.type ===
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+      if (!isDocx) {
+        setError('Only DOCX files are supported. Please upload a Word document (.docx)')
+        setFile(null)
+        e.target.value = '' // Clear the input
         return
       }
 
       // Validate file size (10MB)
       if (selectedFile.size > 10 * 1024 * 1024) {
         setError('File size must be less than 10MB')
+        setFile(null)
+        e.target.value = '' // Clear the input
         return
       }
 
@@ -230,20 +240,20 @@ export default function CreateContractModal({
 
               {/* Upload Document */}
               <div>
-                <FormLabel>Upload Document</FormLabel>
+                <FormLabel>Upload Reference Document (Optional)</FormLabel>
                 <div className="mt-2">
                   <label className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
                     <div className="text-center">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <span className="text-sm text-gray-600">
-                        {file ? file.name : 'Choose File'}
+                        {file ? file.name : 'Choose DOCX File (Optional)'}
                       </span>
-                      <p className="text-xs text-gray-500 mt-1">PDF, DOCX up to 10MB</p>
+                      <p className="text-xs text-gray-500 mt-1">Only DOCX files, up to 10MB</p>
                     </div>
                     <input
                       type="file"
                       onChange={handleFileChange}
-                      accept=".pdf,.docx,.doc"
+                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       className="hidden"
                     />
                   </label>

@@ -20,6 +20,8 @@ export default function PendingSignaturePage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -32,14 +34,19 @@ export default function PendingSignaturePage() {
     } else if (status === 'authenticated') {
       fetchPendingContracts()
     }
-  }, [status, router, signingLink])
+  }, [status, router, signingLink, currentPage, itemsPerPage])
 
   const fetchPendingContracts = async () => {
     try {
       setLoading(true)
-      // Call the dedicated API endpoint for pending signatures
-      const response = await axios.get('/api/contracts/pending-signature')
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      })
+      const response = await axios.get(`/api/contracts/pending-signature?${params}`)
       setContracts(response.data.contracts)
+      setTotalCount(response.data.pagination.total)
+      setTotalPages(response.data.pagination.totalPages)
 
       // Auto-open contract if signingLink is provided
       if (signingLink && response.data.contracts.length > 0) {
@@ -68,11 +75,10 @@ export default function PendingSignaturePage() {
     setSelectedContractId(null)
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(contracts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedContracts = contracts.slice(startIndex, endIndex)
+  // Reset to page 1 when itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
 
   if (status === 'loading') {
     return (
@@ -114,8 +120,8 @@ export default function PendingSignaturePage() {
                 <h2 className="text-xl font-semibold">Awaiting Your Signature</h2>
               </div>
               <p className="text-sm text-gray-600">
-                {contracts.length} {contracts.length === 1 ? 'contract' : 'contracts'} waiting for
-                your review and signature
+                {totalCount} {totalCount === 1 ? 'contract' : 'contracts'} waiting for your review
+                and signature
               </p>
             </div>
 
@@ -138,15 +144,15 @@ export default function PendingSignaturePage() {
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
-                    <div>Contract</div>
-                    <div>Type</div>
+                    <div>Contract Title</div>
+                    <div>Category</div>
                     <div>Status</div>
-                    <div>Sent By</div>
+                    <div>Initiator</div>
                     <div>Receiver</div>
-                    <div>Received</div>
+                    <div>Created</div>
                     <div className="text-center">Actions</div>
                   </div>
-                  {paginatedContracts.map((contract) => (
+                  {contracts.map((contract) => (
                     <ContractCard
                       key={contract.id}
                       contract={contract}
@@ -156,16 +162,13 @@ export default function PendingSignaturePage() {
                   ))}
 
                   {/* Pagination Controls */}
-                  {contracts.length > 0 && (
+                  {totalCount > 0 && (
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Items per page:</span>
                         <select
                           value={itemsPerPage}
-                          onChange={(e) => {
-                            setItemsPerPage(Number(e.target.value))
-                            setCurrentPage(1)
-                          }}
+                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
                           className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value={10}>10</option>
@@ -175,8 +178,8 @@ export default function PendingSignaturePage() {
                           <option value={50}>50</option>
                         </select>
                         <span className="text-sm text-gray-600 ml-4">
-                          Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
-                          {contracts.length}
+                          Showing {(currentPage - 1) * itemsPerPage + 1}-
+                          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
                         </span>
                       </div>
 

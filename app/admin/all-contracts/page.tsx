@@ -40,21 +40,51 @@ export default function AdminAllContractsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    draft: 0,
+    awaiting: 0,
+    completed: 0,
+  })
 
+  // Fetch status counts on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    fetchContracts()
+    fetchStatusCounts()
   }, [])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchContracts()
-  }, [selectedStatus])
+  }, [selectedStatus, currentPage, itemsPerPage])
 
-  // Reset to page 1 when status changes
+  // Reset to page 1 when status or itemsPerPage changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedStatus])
+  }, [selectedStatus, itemsPerPage])
+
+  const fetchStatusCounts = async () => {
+    try {
+      // Fetch counts for all statuses
+      const [allRes, draftRes, awaitingRes, completedRes] = await Promise.all([
+        axios.get('/api/admin/contracts?page=1&limit=1'),
+        axios.get('/api/admin/contracts?page=1&limit=1&status=DRAFT'),
+        axios.get('/api/admin/contracts?page=1&limit=1&status=AWAITING_SIGNATURE'),
+        axios.get('/api/admin/contracts?page=1&limit=1&status=COMPLETED'),
+      ])
+
+      setStatusCounts({
+        all: allRes.data.pagination.total,
+        draft: draftRes.data.pagination.total,
+        awaiting: awaitingRes.data.pagination.total,
+        completed: completedRes.data.pagination.total,
+      })
+    } catch (error) {
+      console.error('Failed to fetch status counts:', error)
+    }
+  }
 
   const fetchContracts = async () => {
     try {
@@ -64,10 +94,28 @@ export default function AdminAllContractsPage() {
         setLoading(true)
       }
 
-      const response = await axios.get('/api/admin/contracts', {
-        params: { status: selectedStatus !== 'ALL' ? selectedStatus : undefined },
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
       })
+      if (selectedStatus !== 'ALL') {
+        params.append('status', selectedStatus)
+      }
+      const response = await axios.get(`/api/admin/contracts?${params}`)
       setContracts(response.data.contracts)
+      setTotalCount(response.data.pagination.total)
+      setTotalPages(response.data.pagination.totalPages)
+
+      // Update the specific count for current filter
+      if (selectedStatus === 'ALL') {
+        setStatusCounts((prev) => ({ ...prev, all: response.data.pagination.total }))
+      } else if (selectedStatus === 'DRAFT') {
+        setStatusCounts((prev) => ({ ...prev, draft: response.data.pagination.total }))
+      } else if (selectedStatus === 'AWAITING_SIGNATURE') {
+        setStatusCounts((prev) => ({ ...prev, awaiting: response.data.pagination.total }))
+      } else if (selectedStatus === 'COMPLETED') {
+        setStatusCounts((prev) => ({ ...prev, completed: response.data.pagination.total }))
+      }
     } catch (error) {
       console.error('Failed to fetch contracts:', error)
     } finally {
@@ -89,6 +137,17 @@ export default function AdminAllContractsPage() {
     return status.replace(/_/g, ' ')
   }
 
+  const getCategoryLabel = (category: string) => {
+    const categoryLabels: Record<string, string> = {
+      HOUSING: 'Housing',
+      LAND: 'Land',
+      CIVIL_SERVICE_COMMISSION: 'Civil Service',
+      MINISTRY_OF_JUSTICE: 'Justice',
+      OTHER: 'Other',
+    }
+    return categoryLabels[category] || category || 'Other'
+  }
+
   const handleViewContract = (contractId: string) => {
     setViewingContractId(contractId)
     setIsSheetOpen(true)
@@ -97,13 +156,10 @@ export default function AdminAllContractsPage() {
   const handleCloseView = () => {
     setViewingContractId(null)
     setIsSheetOpen(false)
+    // Refresh counts in case contract status changed
+    fetchStatusCounts()
+    fetchContracts()
   }
-
-  // Pagination calculations
-  const totalPages = Math.ceil(contracts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedContracts = contracts.slice(startIndex, endIndex)
 
   if (loading) {
     return (
@@ -154,25 +210,19 @@ export default function AdminAllContractsPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <p className="text-sm text-gray-600">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{contracts.length}</p>
+          <p className="text-2xl font-bold text-gray-900">{statusCounts.all}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <p className="text-sm text-gray-600">Draft</p>
-          <p className="text-2xl font-bold text-gray-900">
-            {contracts.filter((c) => c.status === 'DRAFT').length}
-          </p>
+          <p className="text-2xl font-bold text-gray-900">{statusCounts.draft}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <p className="text-sm text-gray-600">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {contracts.filter((c) => c.status === 'AWAITING_SIGNATURE').length}
-          </p>
+          <p className="text-2xl font-bold text-yellow-600">{statusCounts.awaiting}</p>
         </div>
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <p className="text-sm text-gray-600">Completed</p>
-          <p className="text-2xl font-bold text-green-600">
-            {contracts.filter((c) => c.status === 'COMPLETED').length}
-          </p>
+          <p className="text-2xl font-bold text-green-600">{statusCounts.completed}</p>
         </div>
       </div>
 
@@ -187,7 +237,7 @@ export default function AdminAllContractsPage() {
                   : STATUS_FILTERS.find((f) => f.key === selectedStatus)?.label}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                {contracts.length} {contracts.length === 1 ? 'contract' : 'contracts'} found
+                {totalCount} {totalCount === 1 ? 'contract' : 'contracts'} found
               </p>
             </div>
           </div>
@@ -242,14 +292,14 @@ export default function AdminAllContractsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedContracts.map((contract) => (
+                  {contracts.map((contract) => (
                     <tr key={contract.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{contract.title}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-600">
-                          {contract.category?.replace(/_/g, ' ') || 'N/A'}
+                          {getCategoryLabel(contract.category)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -296,26 +346,24 @@ export default function AdminAllContractsPage() {
               </table>
 
               {/* Pagination */}
-              {contracts.length > 0 && (
+              {totalCount > 0 && (
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">Items per page:</span>
                     <select
                       value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value))
-                        setCurrentPage(1)
-                      }}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
                       className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value={10}>10</option>
                       <option value={20}>20</option>
                       <option value={30}>30</option>
+                      <option value={40}>40</option>
                       <option value={50}>50</option>
                     </select>
                     <span className="text-sm text-gray-600 ml-4">
-                      Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
-                      {contracts.length}
+                      Showing {(currentPage - 1) * itemsPerPage + 1}-
+                      {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
                     </span>
                   </div>
 

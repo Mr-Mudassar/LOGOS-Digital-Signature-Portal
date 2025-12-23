@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
+import mammoth from 'mammoth'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -36,16 +37,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contract not found or unauthorized' }, { status: 404 })
     }
 
-    // Extract text from reference document if provided
+    // Extract text from reference document if provided (DOCX only)
     let documentText = ''
     if (referenceDocument) {
-      // For now, we'll create a simple text extraction
-      // In production, you would use a library like pdf-parse or mammoth for proper extraction
-      const buffer = await referenceDocument.arrayBuffer()
-      const text = new TextDecoder().decode(buffer)
+      // Validate file type - only accept DOCX
+      if (!referenceDocument.name.toLowerCase().endsWith('.docx')) {
+        return NextResponse.json(
+          { error: 'Only DOCX files are supported for reference documents' },
+          { status: 400 }
+        )
+      }
 
-      // Basic extraction - take first 2000 chars as context
-      documentText = text.substring(0, 2000)
+      try {
+        // Extract text from DOCX using mammoth
+        const buffer = await referenceDocument.arrayBuffer()
+        const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) })
+        documentText = result.value
+
+        // Limit to reasonable context size (10000 chars)
+        if (documentText.length > 10000) {
+          documentText = documentText.substring(0, 10000)
+        }
+      } catch (error) {
+        console.error('Error extracting DOCX content:', error)
+        return NextResponse.json(
+          { error: 'Failed to extract text from DOCX file. Please ensure the file is valid.' },
+          { status: 400 }
+        )
+      }
     }
 
     // Generate contract using OpenAI
@@ -73,21 +92,41 @@ ${documentText ? `Reference Document Content:\n${documentText}` : ''}
 Generate a complete, legally-sound contract that:
 1. Includes proper legal language appropriate for Lagos State, Nigeria
 2. Has clear sections for terms and conditions
-3. Includes spaces for signatures at the bottom
-4. Follows standard contract formatting
-5. Is professional and comprehensive
+3. Follows standard contract formatting
+4. Is professional and comprehensive
 
-IMPORTANT: Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em). 
-Use headings for sections, paragraphs for content, and lists where appropriate.
-Do NOT include DOCTYPE, html, head, or body tags - only the content HTML.`
+CRITICAL - SIGNATURE SECTION:
+You MUST end the contract with this EXACT signature section (copy it exactly as shown):
+
+<div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #333;">
+  <h3>SIGNATURES</h3>
+  <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+    <div style="flex: 1; padding-right: 20px;">
+      <p><strong>FIRST PARTY (INITIATOR)</strong></p>
+      <p>Name: {{INITIATOR_NAME}}</p>
+      <p>Date: {{INITIATOR_DATE}}</p>
+    </div>
+    <div style="flex: 1; padding-left: 20px;">
+      <p><strong>SECOND PARTY (RECEIVER)</strong></p>
+      <p>Name: {{RECEIVER_NAME}}</p>
+      <p>Date: {{RECEIVER_DATE}}</p>
+    </div>
+  </div>
+</div>
+
+IMPORTANT: 
+- Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
+- Use headings for sections, paragraphs for content, and lists where appropriate
+- Do NOT include DOCTYPE, html, head, or body tags - only the content HTML
+- The signature section placeholders ({{INITIATOR_NAME}}, etc.) will be replaced when parties sign`
 
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Using gpt-4o-mini - available for all API keys
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content:
-              'You are an expert legal document generator specializing in Nigerian contract law. Generate professional, legally-sound contracts.',
+              'You are an expert legal document generator specializing in Nigerian contract law. Generate professional, legally-sound contracts with proper HTML formatting.',
           },
           {
             role: 'user',
@@ -95,7 +134,7 @@ Do NOT include DOCTYPE, html, head, or body tags - only the content HTML.`
           },
         ],
         temperature: 0.7,
-        max_tokens: 2500,
+        max_tokens: 3000,
       })
 
       aiGeneratedContent = completion.choices[0].message.content

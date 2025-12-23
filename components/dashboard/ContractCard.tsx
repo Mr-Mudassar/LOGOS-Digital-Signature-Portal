@@ -71,11 +71,16 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
     )
   }
 
-  const getContractType = () => {
-    // You can enhance this based on your needs
-    if (contract.title.toLowerCase().includes('housing')) return 'Housing'
-    if (contract.title.toLowerCase().includes('employment')) return 'Employment'
-    return 'Business'
+  const getCategory = () => {
+    // Map category enum to display labels
+    const categoryLabels: Record<string, string> = {
+      HOUSING: 'Housing',
+      LAND: 'Land',
+      CIVIL_SERVICE_COMMISSION: 'Civil Service',
+      MINISTRY_OF_JUSTICE: 'Justice',
+      OTHER: 'Other',
+    }
+    return categoryLabels[contract.category] || contract.category || 'Other'
   }
 
   const getProvider = () => {
@@ -97,7 +102,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
       </div>
 
       <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <p className="text-gray-700">{getContractType()}</p>
+        <p className="text-gray-700">{getCategory()}</p>
       </div>
 
       <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>

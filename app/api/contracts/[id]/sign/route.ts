@@ -76,18 +76,46 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'You have already signed this contract' }, { status: 400 })
     }
 
-    // Create signature with signer name and current date
-    const signatureData = `${signerName} - ${new Date().toLocaleDateString('en-US', {
+    // Format date and time
+    const signedDate = new Date()
+    const formattedDate = signedDate.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    })}`
+    })
+    const formattedTime = signedDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    const formattedDateTime = `${formattedDate} at ${formattedTime}`
+
+    const signatureData = `${signerName} - ${formattedDateTime}`
+
+    // Replace placeholders in contract content with bold text
+    let updatedContent = contract.aiGeneratedContent || ''
+    if (signerType === 'initiator') {
+      updatedContent = updatedContent
+        .replace(/\{\{INITIATOR_NAME\}\}/g, `<strong>${signerName}</strong>`)
+        .replace(/\{\{INITIATOR_DATE\}\}/g, `<strong>${formattedDateTime}</strong>`)
+    } else {
+      updatedContent = updatedContent
+        .replace(/\{\{RECEIVER_NAME\}\}/g, `<strong>${signerName}</strong>`)
+        .replace(/\{\{RECEIVER_DATE\}\}/g, `<strong>${formattedDateTime}</strong>`)
+    }
+
+    // Update contract with replaced placeholders
+    await prisma.contract.update({
+      where: { id },
+      data: {
+        aiGeneratedContent: updatedContent,
+      },
+    })
 
     await prisma.signature.create({
       data: {
         contractId: id,
         userId: session.user.id,
-        signatureData, // Store as "Name - Date" format
+        signatureData,
         type,
       },
     })

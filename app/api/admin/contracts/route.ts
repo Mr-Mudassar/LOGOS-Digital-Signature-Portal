@@ -21,15 +21,25 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    // Get status filter from query params
+    // Get status filter and pagination params from query
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // Validate pagination params
+    const validPage = Math.max(1, page)
+    const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 items per page
+    const skip = (validPage - 1) * validLimit
 
     // Build where clause
     const where: any = {}
     if (status) {
       where.status = status
     }
+
+    // Get total count for pagination
+    const totalCount = await prisma.contract.count({ where })
 
     // Get all contracts with initiator and receiver info
     const contracts = await prisma.contract.findMany({
@@ -60,9 +70,19 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: validLimit,
     })
 
-    return NextResponse.json({ contracts })
+    return NextResponse.json({
+      contracts,
+      pagination: {
+        page: validPage,
+        limit: validLimit,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / validLimit),
+      },
+    })
   } catch (error) {
     console.error('Admin contracts error:', error)
     return NextResponse.json({ error: 'Failed to fetch contracts' }, { status: 500 })

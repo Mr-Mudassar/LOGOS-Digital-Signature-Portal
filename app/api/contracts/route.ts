@@ -33,6 +33,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // Validate pagination params
+    const validPage = Math.max(1, page)
+    const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 items per page
+    const skip = (validPage - 1) * validLimit
 
     const where: any = {
       OR: [{ initiatorId: session.user.id }, { receiverId: session.user.id }],
@@ -41,6 +48,9 @@ export async function GET(request: NextRequest) {
     if (status) {
       where.status = status
     }
+
+    // Get total count for pagination
+    const totalCount = await prisma.contract.count({ where })
 
     const contracts = await prisma.contract.findMany({
       where,
@@ -74,9 +84,22 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: validLimit,
     })
 
-    return NextResponse.json({ contracts }, { status: 200 })
+    return NextResponse.json(
+      {
+        contracts,
+        pagination: {
+          page: validPage,
+          limit: validLimit,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / validLimit),
+        },
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Get contracts error:', error)
     return NextResponse.json(

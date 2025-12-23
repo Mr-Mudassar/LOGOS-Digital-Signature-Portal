@@ -21,6 +21,8 @@ export default function DashboardPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
@@ -29,16 +31,22 @@ export default function DashboardPage() {
     if (status === 'authenticated') {
       fetchContracts()
     }
-  }, [status, filter])
+  }, [status, filter, currentPage, itemsPerPage])
 
   const fetchContracts = async () => {
     try {
       setLoading(true)
-      const url = filter === 'all' ? '/api/contracts' : `/api/contracts?status=${filter}`
-      const response = await axios.get(url)
-      const fetchedContracts = response.data.contracts
-
-      setContracts(fetchedContracts)
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      })
+      if (filter !== 'all') {
+        params.append('status', filter)
+      }
+      const response = await axios.get(`/api/contracts?${params}`)
+      setContracts(response.data.contracts)
+      setTotalCount(response.data.pagination.total)
+      setTotalPages(response.data.pagination.totalPages)
     } catch (error) {
       console.error('Error fetching contracts:', error)
     } finally {
@@ -63,16 +71,10 @@ export default function DashboardPage() {
     setSelectedContractId(null)
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(contracts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedContracts = contracts.slice(startIndex, endIndex)
-
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filter or itemsPerPage changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [filter])
+  }, [filter, itemsPerPage])
 
   if (status === 'loading') {
     return (
@@ -184,15 +186,15 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
-                    <div>Contract</div>
-                    <div>Type</div>
+                    <div>Contract Title</div>
+                    <div>Category</div>
                     <div>Status</div>
-                    <div>Provider</div>
+                    <div>Initiator</div>
                     <div>Receiver</div>
                     <div>Created</div>
                     <div className="text-center">Actions</div>
                   </div>
-                  {paginatedContracts.map((contract) => (
+                  {contracts.map((contract) => (
                     <ContractCard
                       key={contract.id}
                       contract={contract}
@@ -202,16 +204,13 @@ export default function DashboardPage() {
                   ))}
 
                   {/* Pagination Controls */}
-                  {contracts.length > 0 && (
+                  {totalCount > 0 && (
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Items per page:</span>
                         <select
                           value={itemsPerPage}
-                          onChange={(e) => {
-                            setItemsPerPage(Number(e.target.value))
-                            setCurrentPage(1)
-                          }}
+                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
                           className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value={10}>10</option>
@@ -221,8 +220,8 @@ export default function DashboardPage() {
                           <option value={50}>50</option>
                         </select>
                         <span className="text-sm text-gray-600 ml-4">
-                          Showing {startIndex + 1}-{Math.min(endIndex, contracts.length)} of{' '}
-                          {contracts.length}
+                          Showing {(currentPage - 1) * itemsPerPage + 1}-
+                          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
                         </span>
                       </div>
 

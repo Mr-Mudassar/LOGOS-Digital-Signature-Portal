@@ -11,9 +11,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import ConfirmationModal from './ConfirmationModal'
-import RichTextEditor from './RichTextEditor'
+import ContractEditor from './ContractEditor'
 import { LoadingButton } from './ui/loading-button'
 import { Edit, FileSignature, Send, X, Check } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Signature {
   id: string
@@ -110,14 +111,17 @@ export default function ContractViewSheet({
 
     setSaving(true)
     try {
-      await axios.patch(`/api/contracts/${contractId}`, {
-        aiGeneratedContent: editedContent,
+      await axios.put(`/api/contracts/${contractId}/edit`, {
+        content: editedContent,
       })
       setContract((prev) => (prev ? { ...prev, aiGeneratedContent: editedContent } : null))
       setIsEditing(false)
+      toast.success('Contract updated successfully')
       if (onUpdate) onUpdate()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save changes')
+      const errorMsg = err.response?.data?.error || 'Failed to save changes'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setSaving(false)
     }
@@ -144,10 +148,13 @@ export default function ContractViewSheet({
       })
 
       setShowSignConfirm(false)
+      toast.success('Contract signed successfully!')
       fetchContract()
       if (onUpdate) onUpdate()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to sign contract')
+      const errorMsg = err.response?.data?.error || 'Failed to sign contract'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setSigning(false)
     }
@@ -164,13 +171,45 @@ export default function ContractViewSheet({
     try {
       await axios.post(`/api/contracts/${contractId}/send`)
       setShowSendConfirm(false)
+      toast.success('Contract sent successfully!')
       onClose()
       if (onUpdate) onUpdate()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to send contract')
+      const errorMsg = err.response?.data?.error || 'Failed to send contract'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setSending(false)
     }
+  }
+
+  // Helper function to replace placeholders with visual underlines for display
+  // Only replaces if placeholders still exist (not yet signed)
+  const getDisplayContent = (content: string): string => {
+    // Check if content has any placeholders
+    if (!content.includes('{{')) {
+      // No placeholders, return content as-is (already signed)
+      return content
+    }
+
+    // Replace placeholders with underlines
+    return content
+      .replace(
+        /\{\{INITIATOR_NAME\}\}/g,
+        '<span class="inline-block border-b-2 border-gray-400 min-w-[200px] text-center text-gray-400">_________________</span>'
+      )
+      .replace(
+        /\{\{INITIATOR_DATE\}\}/g,
+        '<span class="inline-block border-b-2 border-gray-400 min-w-[200px] text-center text-gray-400">_________________</span>'
+      )
+      .replace(
+        /\{\{RECEIVER_NAME\}\}/g,
+        '<span class="inline-block border-b-2 border-gray-400 min-w-[200px] text-center text-gray-400">_________________</span>'
+      )
+      .replace(
+        /\{\{RECEIVER_DATE\}\}/g,
+        '<span class="inline-block border-b-2 border-gray-400 min-w-[200px] text-center text-gray-400">_________________</span>'
+      )
   }
 
   if (!isOpen) return null
@@ -185,6 +224,7 @@ export default function ContractViewSheet({
   const receiverSignature = contract?.signatures.find((sig) => sig.type === 'RECEIVER')
   const canReceiverSign =
     isReceiver && contract?.status === 'AWAITING_SIGNATURE' && !hasReceiverSigned
+  const canEdit = isInitiator && !hasInitiatorSigned && !hasReceiverSigned
 
   return (
     <>
@@ -219,7 +259,7 @@ export default function ContractViewSheet({
               <>
                 {/* Action Buttons */}
                 <div className="flex gap-3 justify-end border-b pb-4">
-                  {!isEditing && !hasInitiatorSigned && isInitiator && (
+                  {canEdit && !isEditing && (
                     <>
                       <LoadingButton
                         onClick={handleEdit}
@@ -296,7 +336,7 @@ export default function ContractViewSheet({
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Edit Contract Content
                     </label>
-                    <RichTextEditor
+                    <ContractEditor
                       content={editedContent}
                       onChange={setEditedContent}
                       editable={true}
@@ -319,73 +359,13 @@ export default function ContractViewSheet({
                 ) : (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-4">Contract Terms</h3>
-                    <RichTextEditor
-                      content={contract.aiGeneratedContent || '<p>No content generated yet.</p>'}
+                    <ContractEditor
+                      content={getDisplayContent(
+                        contract.aiGeneratedContent || '<p>No content generated yet.</p>'
+                      )}
                       onChange={() => {}}
                       editable={false}
                     />
-
-                    {/* Signatures Section */}
-                    {(hasInitiatorSigned || hasReceiverSigned) && (
-                      <div className="mt-8 space-y-6">
-                        <h3 className="text-sm font-semibold text-gray-700">Signatures</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                          {/* Initiator Signature */}
-                          <div className="border rounded-lg p-4 bg-white">
-                            <p className="text-xs text-gray-600 mb-2">First Party</p>
-                            {initiatorSignature ? (
-                              <div>
-                                <p className="text-lg font-semibold text-gray-900 mb-2">
-                                  {contract.initiatorName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Signed on{' '}
-                                  {new Date(initiatorSignature.signedAt).toLocaleDateString(
-                                    'en-US',
-                                    {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                    }
-                                  )}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="h-20 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                                Awaiting signature
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Receiver Signature */}
-                          <div className="border rounded-lg p-4 bg-white">
-                            <p className="text-xs text-gray-600 mb-2">Second Party</p>
-                            {receiverSignature ? (
-                              <div>
-                                <p className="text-lg font-semibold text-gray-900 mb-2">
-                                  {contract.receiverName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Signed on{' '}
-                                  {new Date(receiverSignature.signedAt).toLocaleDateString(
-                                    'en-US',
-                                    {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                    }
-                                  )}
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="h-20 flex items-center justify-center text-gray-400 text-sm border border-dashed rounded">
-                                Awaiting signature
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </>
