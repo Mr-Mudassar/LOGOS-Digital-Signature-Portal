@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { FileText, Filter, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -50,23 +50,7 @@ export default function AdminAllContractsPage() {
     completed: 0,
   })
 
-  // Fetch status counts on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchStatusCounts()
-  }, [])
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchContracts()
-  }, [selectedStatus, currentPage, itemsPerPage])
-
-  // Reset to page 1 when status or itemsPerPage changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [selectedStatus, itemsPerPage])
-
-  const fetchStatusCounts = async () => {
+  const fetchStatusCounts = useCallback(async () => {
     try {
       // Fetch counts for all statuses
       const [allRes, draftRes, awaitingRes, completedRes] = await Promise.all([
@@ -85,15 +69,11 @@ export default function AdminAllContractsPage() {
     } catch (error) {
       console.error('Failed to fetch status counts:', error)
     }
-  }
+  }, [])
 
-  const fetchContracts = async () => {
+  const fetchContracts = useCallback(async () => {
     try {
-      if (contracts.length > 0) {
-        setFetchingData(true)
-      } else {
-        setLoading(true)
-      }
+      setLoading(true)
 
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -123,7 +103,21 @@ export default function AdminAllContractsPage() {
       setLoading(false)
       setFetchingData(false)
     }
-  }
+  }, [selectedStatus, currentPage, itemsPerPage])
+
+  // Fetch status counts on mount
+  useEffect(() => {
+    fetchStatusCounts()
+  }, [fetchStatusCounts])
+
+  useEffect(() => {
+    fetchContracts()
+  }, [fetchContracts])
+
+  // Reset to page 1 when status or itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedStatus, itemsPerPage])
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -160,17 +154,6 @@ export default function AdminAllContractsPage() {
     // Refresh counts in case contract status changed
     fetchStatusCounts()
     fetchContracts()
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading contracts...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -244,7 +227,7 @@ export default function AdminAllContractsPage() {
           </div>
         </div>
 
-        {fetchingData && (
+        {(loading || fetchingData) && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>

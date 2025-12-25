@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Shield, Plus, FileText, Clock } from 'lucide-react'
@@ -26,14 +26,7 @@ export default function DashboardPage() {
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchContracts()
-    }
-  }, [status, filter, currentPage, itemsPerPage])
-
-  const fetchContracts = async () => {
+  const fetchContracts = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -52,7 +45,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter, currentPage, itemsPerPage])
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchContracts()
+    }
+  }, [status, fetchContracts])
 
   const handleContractCreated = (contractId: string) => {
     setIsModalOpen(false)

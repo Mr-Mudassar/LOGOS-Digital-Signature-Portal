@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 import {
@@ -70,19 +70,7 @@ export default function ContractViewSheet({
   const [sending, setSending] = useState(false)
   const [showSendConfirm, setShowSendConfirm] = useState(false)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (isOpen && contractId) {
-      fetchContract()
-    } else {
-      setContract(null)
-      setLoading(true)
-      setError('')
-      setIsEditing(false)
-    }
-  }, [isOpen, contractId])
-
-  const fetchContract = async () => {
+  const fetchContract = useCallback(async () => {
     if (!contractId) return
 
     try {
@@ -96,7 +84,18 @@ export default function ContractViewSheet({
       setError(err.response?.data?.error || 'Failed to load contract')
       setLoading(false)
     }
-  }
+  }, [contractId])
+
+  useEffect(() => {
+    if (isOpen && contractId) {
+      fetchContract()
+    } else {
+      setContract(null)
+      setLoading(true)
+      setError('')
+      setIsEditing(false)
+    }
+  }, [isOpen, contractId, fetchContract])
 
   const handleEdit = () => {
     setIsEditing(true)

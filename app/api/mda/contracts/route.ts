@@ -14,6 +14,13 @@ export async function GET(request: NextRequest) {
     // Get category from query params (optional)
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // Validate pagination params
+    const validPage = Math.max(1, page)
+    const validLimit = Math.min(Math.max(1, limit), 100) // Max 100 items per page
+    const skip = (validPage - 1) * validLimit
 
     // Build where clause
     const where: any = {}
@@ -21,6 +28,9 @@ export async function GET(request: NextRequest) {
     if (category && category !== 'ALL') {
       where.category = category
     }
+
+    // Get total count for pagination
+    const totalCount = await prisma.contract.count({ where })
 
     // Fetch contracts
     const contracts = await prisma.contract.findMany({
@@ -55,6 +65,8 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: validLimit,
     })
 
     // Get contract counts by category
@@ -71,6 +83,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       contracts,
       counts,
+      pagination: {
+        page: validPage,
+        limit: validLimit,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / validLimit),
+      },
     })
   } catch (error) {
     console.error('MDA contracts error:', error)

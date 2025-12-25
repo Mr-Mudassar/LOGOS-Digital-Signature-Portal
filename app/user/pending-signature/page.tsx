@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Shield, FileSignature } from 'lucide-react'
@@ -23,20 +23,7 @@ export default function PendingSignaturePage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      // Redirect to sign-in with callback URL
-      const callbackUrl = signingLink
-        ? `/user/pending-signature?signingLink=${signingLink}`
-        : '/user/pending-signature'
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`)
-    } else if (status === 'authenticated') {
-      fetchPendingContracts()
-    }
-  }, [status, router, signingLink, currentPage, itemsPerPage])
-
-  const fetchPendingContracts = async () => {
+  const fetchPendingContracts = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -63,7 +50,19 @@ export default function PendingSignaturePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, itemsPerPage, signingLink, router])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      // Redirect to sign-in with callback URL
+      const callbackUrl = signingLink
+        ? `/user/pending-signature?signingLink=${signingLink}`
+        : '/user/pending-signature'
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+    } else if (status === 'authenticated') {
+      fetchPendingContracts()
+    }
+  }, [status, router, signingLink, fetchPendingContracts])
 
   const handleOpenContract = (contractId: string) => {
     setSelectedContractId(contractId)
