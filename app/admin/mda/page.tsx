@@ -2,15 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import { Building2, Home, MapPin, Users, Scale, Eye } from 'lucide-react'
+import { Building2, Home, MapPin, Users, Scale, Eye, FileText, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import ContractViewSheet from '@/components/ContractViewSheet'
+import PDFViewerSheet from '@/components/PDFViewerSheet'
 
 interface Contract {
   id: string
@@ -18,6 +14,7 @@ interface Contract {
   status: string
   category: string
   createdAt: string
+  pdfUrl?: string | null
   initiator: {
     name: string | null
     email: string
@@ -26,20 +23,6 @@ interface Contract {
     name: string | null
     email: string
   } | null
-}
-
-interface ContractDetails extends Contract {
-  aiGeneratedContent: string | null
-  initiatorName: string
-  receiverName: string
-  signatures: Array<{
-    type: string
-    signedAt: string
-    user: {
-      name: string | null
-      email: string
-    }
-  }>
 }
 
 interface MDAData {
@@ -66,8 +49,10 @@ export default function MDADashboard() {
   const [loading, setLoading] = useState(true)
   const [fetchingData, setFetchingData] = useState(false)
   const [viewingContractId, setViewingContractId] = useState<string | null>(null)
-  const [viewingContract, setViewingContract] = useState<ContractDetails | null>(null)
-  const [loadingContract, setLoadingContract] = useState(false)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [showPDFViewer, setShowPDFViewer] = useState(false)
+  const [selectedPDFUrl, setSelectedPDFUrl] = useState<string | null>(null)
+  const [selectedPDFTitle, setSelectedPDFTitle] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
@@ -118,22 +103,14 @@ export default function MDADashboard() {
     return status.replace(/_/g, ' ')
   }
 
-  const handleViewContract = async (contractId: string) => {
+  const handleViewContract = (contractId: string) => {
     setViewingContractId(contractId)
-    setLoadingContract(true)
-    try {
-      const response = await axios.get(`/api/contracts/${contractId}`)
-      setViewingContract(response.data.contract)
-    } catch (error) {
-      console.error('Failed to fetch contract details:', error)
-    } finally {
-      setLoadingContract(false)
-    }
+    setIsSheetOpen(true)
   }
 
   const handleCloseView = () => {
+    setIsSheetOpen(false)
     setViewingContractId(null)
-    setViewingContract(null)
   }
 
   return (
@@ -273,14 +250,32 @@ export default function MDADashboard() {
                       {new Date(contract.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewContract(contract.id)}
+                      <DropdownMenu
+                        trigger={
+                          <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors">
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        }
                       >
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
+                        <DropdownMenuItem
+                          onClick={() => handleViewContract(contract.id)}
+                          icon={<Eye className="w-4 h-4" />}
+                        >
+                          View Contract
+                        </DropdownMenuItem>
+                        {contract.pdfUrl && contract.status === 'COMPLETED' && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedPDFUrl(contract.pdfUrl!)
+                              setSelectedPDFTitle(contract.title)
+                              setShowPDFViewer(true)
+                            }}
+                            icon={<FileText className="w-4 h-4" />}
+                          >
+                            View PDF Contract
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -339,107 +334,27 @@ export default function MDADashboard() {
         )}
       </div>
 
-      {/* View Contract Sheet */}
-      <Sheet open={viewingContractId !== null} onOpenChange={handleCloseView}>
-        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-2xl">{viewingContract?.title || 'Loading...'}</SheetTitle>
-            <SheetDescription>
-              {viewingContract && (
-                <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-gray-100">
-                  {viewingContract.status.replace(/_/g, ' ').toLowerCase()}
-                </span>
-              )}
-            </SheetDescription>
-          </SheetHeader>
+      {/* Contract View Sheet */}
+      <ContractViewSheet
+        isOpen={isSheetOpen}
+        onClose={handleCloseView}
+        contractId={viewingContractId}
+        onUpdate={fetchContracts}
+      />
 
-          {loadingContract ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : viewingContract ? (
-            <div className="mt-6 space-y-6">
-              {/* Contract Parties */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Contract Parties</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">First Party (Initiator)</p>
-                    <p className="font-medium">{viewingContract.initiatorName}</p>
-                    <p className="text-sm text-gray-500">{viewingContract.initiator.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Second Party</p>
-                    <p className="font-medium">{viewingContract.receiverName}</p>
-                    <p className="text-sm text-gray-500">
-                      {viewingContract.receiver?.email || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contract Content */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">Contract Content</h3>
-                <div
-                  className="prose max-w-none border rounded-lg p-6 bg-white"
-                  dangerouslySetInnerHTML={{
-                    __html: viewingContract.aiGeneratedContent || '<p>No content available</p>',
-                  }}
-                />
-              </div>
-
-              {/* Signatures */}
-              {viewingContract.signatures.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Signatures</h3>
-                  <div className="space-y-3">
-                    {viewingContract.signatures.map((signature, index) => (
-                      <div
-                        key={index}
-                        className="bg-green-50 border border-green-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-green-900">
-                              {signature.user.name || signature.user.email}
-                            </p>
-                            <p className="text-sm text-green-700">
-                              {signature.type === 'INITIATOR' ? 'First Party' : 'Second Party'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-green-600">
-                              Signed on {new Date(signature.signedAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Metadata */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Contract Information</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Category</p>
-                    <p className="font-medium">{viewingContract.category.replace(/_/g, ' ')}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Created</p>
-                    <p className="font-medium">
-                      {new Date(viewingContract.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      {/* PDF Viewer Sheet */}
+      {selectedPDFUrl && (
+        <PDFViewerSheet
+          isOpen={showPDFViewer}
+          onClose={() => {
+            setShowPDFViewer(false)
+            setSelectedPDFUrl(null)
+            setSelectedPDFTitle('')
+          }}
+          pdfUrl={selectedPDFUrl}
+          contractTitle={selectedPDFTitle}
+        />
+      )}
     </div>
   )
 }

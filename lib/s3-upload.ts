@@ -26,7 +26,7 @@ export async function uploadToS3(
     Key: key,
     Body: buffer,
     ContentType: contentType,
-    ACL: 'private', // Keep files private, access via signed URLs
+    // ACL removed - bucket must be configured with public access policy
   })
 
   await s3Client.send(command)

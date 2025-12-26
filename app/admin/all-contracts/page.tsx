@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import { FileText, Filter, Eye } from 'lucide-react'
+import { FileText, Filter, Eye, Download, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ContractViewSheet from '@/components/ContractViewSheet'
+import PDFViewerSheet from '@/components/PDFViewerSheet'
+import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 interface Contract {
   id: string
@@ -39,6 +41,9 @@ export default function AdminAllContractsPage() {
   const [fetchingData, setFetchingData] = useState(false)
   const [viewingContractId, setViewingContractId] = useState<string | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [showPDFViewer, setShowPDFViewer] = useState(false)
+  const [selectedPDFUrl, setSelectedPDFUrl] = useState<string | null>(null)
+  const [selectedPDFTitle, setSelectedPDFTitle] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
@@ -316,25 +321,35 @@ export default function AdminAllContractsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewContract(contract.id)}
+                          <DropdownMenu
+                            trigger={
+                              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors">
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                            }
                           >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          {contract.pdfUrl && contract.status === 'COMPLETED' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(contract.pdfUrl!, '_blank')}
-                              title="Download PDF"
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewContract(contract.id)
+                              }}
+                              icon={<Eye className="w-4 h-4" />}
                             >
-                              <FileText className="w-4 h-4 mr-1" />
-                              PDF
-                            </Button>
-                          )}
+                              View Contract
+                            </DropdownMenuItem>
+                            {contract.pdfUrl && contract.status === 'COMPLETED' && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedPDFUrl(contract.pdfUrl!)
+                                  setSelectedPDFTitle(contract.title)
+                                  setShowPDFViewer(true)
+                                }}
+                                icon={<FileText className="w-4 h-4" />}
+                              >
+                                View PDF Contract
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -397,6 +412,20 @@ export default function AdminAllContractsPage() {
         contractId={viewingContractId}
         onUpdate={fetchContracts}
       />
+
+      {/* PDF Viewer Sheet */}
+      {selectedPDFUrl && (
+        <PDFViewerSheet
+          isOpen={showPDFViewer}
+          onClose={() => {
+            setShowPDFViewer(false)
+            setSelectedPDFUrl(null)
+            setSelectedPDFTitle('')
+          }}
+          pdfUrl={selectedPDFUrl}
+          contractTitle={selectedPDFTitle}
+        />
+      )}
     </div>
   )
 }

@@ -1,11 +1,12 @@
 'use client'
 
 import { formatDateTime } from '@/lib/utils'
-import { Eye, Trash2, Send, FileSignature, MoreVertical, Download } from 'lucide-react'
+import { Eye, Trash2, Send, FileSignature, MoreVertical, Download, FileText } from 'lucide-react'
 import { useState } from 'react'
 import axios from 'axios'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import PDFViewerSheet from '@/components/PDFViewerSheet'
 
 interface ContractCardProps {
   contract: any
@@ -17,6 +18,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [showPDFViewer, setShowPDFViewer] = useState(false)
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -153,11 +155,11 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation()
-                window.open(contract.pdfUrl, '_blank')
+                setShowPDFViewer(true)
               }}
-              icon={<Download className="w-4 h-4" />}
+              icon={<FileText className="w-4 h-4" />}
             >
-              Download PDF
+              View PDF Contract
             </DropdownMenuItem>
           )}
 
@@ -209,6 +211,16 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
         <div className="col-span-7 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {deleteError}
         </div>
+      )}
+
+      {/* PDF Viewer Sheet */}
+      {contract.pdfUrl && (
+        <PDFViewerSheet
+          isOpen={showPDFViewer}
+          onClose={() => setShowPDFViewer(false)}
+          pdfUrl={contract.pdfUrl}
+          contractTitle={contract.title}
+        />
       )}
     </div>
   )

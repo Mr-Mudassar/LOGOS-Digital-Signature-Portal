@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
         createdAt: true,
         receiverName: true,
         receiverEmail: true,
+        pdfUrl: true,
         initiator: {
           select: {
             id: true,

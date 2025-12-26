@@ -13,8 +13,10 @@ import {
 import ConfirmationModal from './ConfirmationModal'
 import ContractEditor from './ContractEditor'
 import { LoadingButton } from './ui/loading-button'
-import { Edit, FileSignature, Send, X, Check, Download } from 'lucide-react'
+import { Edit, FileSignature, Send, X, Check, Download, FileText, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
+import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import PDFViewerSheet from './PDFViewerSheet'
 
 interface Signature {
   id: string
@@ -69,6 +71,7 @@ export default function ContractViewSheet({
   const [signing, setSigning] = useState(false)
   const [sending, setSending] = useState(false)
   const [showSendConfirm, setShowSendConfirm] = useState(false)
+  const [showPDFViewer, setShowPDFViewer] = useState(false)
 
   const fetchContract = useCallback(async () => {
     if (!contractId) return
@@ -260,16 +263,14 @@ export default function ContractViewSheet({
                 {/* Action Buttons */}
                 <div className="flex gap-3 justify-end border-b pb-4">
                   {contract.pdfUrl && contract.status === 'COMPLETED' && (
-                    <>
-                      <LoadingButton
-                        onClick={() => window.open(contract.pdfUrl!, '_blank')}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download PDF
-                      </LoadingButton>
-                    </>
+                    <LoadingButton
+                      onClick={() => setShowPDFViewer(true)}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View PDF Contract
+                    </LoadingButton>
                   )}
                   {canEdit && !isEditing && (
                     <>
@@ -415,6 +416,16 @@ export default function ContractViewSheet({
           cancelText="Cancel"
           variant="info"
           loading={sending}
+        />
+      )}
+
+      {/* PDF Viewer Sheet */}
+      {contract && contract.pdfUrl && (
+        <PDFViewerSheet
+          isOpen={showPDFViewer}
+          onClose={() => setShowPDFViewer(false)}
+          pdfUrl={contract.pdfUrl}
+          contractTitle={contract.title}
         />
       )}
     </>
