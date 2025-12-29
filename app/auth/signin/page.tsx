@@ -101,7 +101,7 @@ export default function SignInPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold mb-6">Login with myID</h2>
+          <h2 className="text-xl font-semibold mb-6">Login with Email and Password</h2>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
