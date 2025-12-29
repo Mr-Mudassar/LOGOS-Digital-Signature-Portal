@@ -60,14 +60,12 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
 
     const labels = {
       DRAFT: 'Draft',
-      AWAITING_SIGNATURE: 'Pending',
-      COMPLETED: 'Signed',
+      AWAITING_SIGNATURE: 'Awaiting Signature',
+      COMPLETED: 'Completed',
     }
 
     return (
       <span className={`badge ${badges[status as keyof typeof badges]}`}>
-        {status === 'COMPLETED' && '✓ '}
-        {status === 'AWAITING_SIGNATURE' && '🔵 '}
         {labels[status as keyof typeof labels]}
       </span>
     )

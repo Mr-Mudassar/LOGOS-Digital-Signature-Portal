@@ -103,6 +103,17 @@ export default function MDADashboard() {
     return status.replace(/_/g, ' ')
   }
 
+  const getCategoryLabel = (category: string) => {
+    const categoryLabels: Record<string, string> = {
+      HOUSING: 'Housing',
+      LAND: 'Land',
+      CIVIL_SERVICE_COMMISSION: 'Civil Service',
+      MINISTRY_OF_JUSTICE: 'Justice',
+      OTHER: 'Other',
+    }
+    return categoryLabels[category] || category || 'Other'
+  }
+
   const handleViewContract = (contractId: string) => {
     setViewingContractId(contractId)
     setIsSheetOpen(true)
@@ -205,10 +216,13 @@ export default function MDADashboard() {
                     Title
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    First Party
+                    Category
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Second Party
+                    Initiator
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Receiver
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -228,13 +242,24 @@ export default function MDADashboard() {
                       <div className="text-sm font-medium text-gray-900">{contract.title}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {contract.initiator.name || contract.initiator.email}
+                      <div className="text-sm text-gray-700">
+                        {getCategoryLabel(contract.category)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {contract.receiver?.name || contract.receiver?.email || 'N/A'}
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {contract.initiator.name || 'N/A'}
+                        </div>
+                        <div className="text-gray-500">{contract.initiator.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {contract.receiver?.name || 'N/A'}
+                        </div>
+                        <div className="text-gray-500">{contract.receiver?.email || 'N/A'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

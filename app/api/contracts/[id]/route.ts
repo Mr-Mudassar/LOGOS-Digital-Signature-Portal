@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET - Fetch a single contract
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -12,8 +12,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         initiator: {
           select: {
@@ -83,7 +85,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE - Delete a contract
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -91,8 +96,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!contract) {
@@ -113,7 +120,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     await prisma.contract.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Contract deleted successfully' }, { status: 200 })
@@ -127,7 +134,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 }
 
 // PATCH - Update contract content
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -135,8 +142,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!contract) {
@@ -150,7 +159,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     // Can't edit if already signed
     const hasSignatures = await prisma.signature.findFirst({
-      where: { contractId: params.id },
+      where: { contractId: id },
     })
 
     if (hasSignatures) {
@@ -164,7 +173,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { aiGeneratedContent } = body
 
     const updatedContract = await prisma.contract.update({
-      where: { id: params.id },
+      where: { id },
       data: { aiGeneratedContent },
     })
 

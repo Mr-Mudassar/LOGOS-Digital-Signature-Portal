@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { sendContractInvitation } from '@/lib/email'
 
 // POST - Send contract to receiver
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -13,8 +13,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         initiator: {
           select: {
@@ -36,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Update contract status
     const updatedContract = await prisma.contract.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'AWAITING_SIGNATURE',
       },

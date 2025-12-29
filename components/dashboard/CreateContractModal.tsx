@@ -27,18 +27,23 @@ interface CreateContractModalProps {
 }
 
 // Zod validation schema
-const contractSchema = z.object({
-  title: z
-    .string()
-    .min(5, 'Title must be at least 5 characters')
-    .max(60, 'Title must not exceed 60 characters'),
-  initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
-  initiatorEmail: z.string().email('Invalid email address'),
-  receiverName: z.string().min(2, 'Name must be at least 2 characters'),
-  receiverEmail: z.string().email('Invalid email address'),
-  userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
-  category: z.string().min(1, 'Please select a category'),
-})
+const contractSchema = z
+  .object({
+    title: z
+      .string()
+      .min(5, 'Title must be at least 5 characters')
+      .max(60, 'Title must not exceed 60 characters'),
+    initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
+    initiatorEmail: z.string().email('Invalid email address'),
+    receiverName: z.string().min(2, 'Name must be at least 2 characters'),
+    receiverEmail: z.string().email('Invalid email address'),
+    userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
+    category: z.string().min(1, 'Please select a category'),
+  })
+  .refine((data) => data.initiatorEmail.toLowerCase() !== data.receiverEmail.toLowerCase(), {
+    message: 'First party and second party email addresses cannot be the same',
+    path: ['receiverEmail'],
+  })
 
 type ContractFormData = z.infer<typeof contractSchema>
 
