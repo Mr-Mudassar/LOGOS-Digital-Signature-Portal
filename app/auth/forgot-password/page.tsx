@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import axios from 'axios'
-import { Shield, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -100,9 +101,13 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <Shield className="w-7 h-7 text-white" />
-          </div>
+          <Image
+            src="/lagos2.jpg"
+            alt="Lagos State"
+            width={80}
+            height={80}
+            className="rounded-lg"
+          />
           <div>
             <h1 className="font-bold text-gray-900 text-xl">Lagos State Digital</h1>
             <p className="text-sm text-gray-600">Signature Portal</p>

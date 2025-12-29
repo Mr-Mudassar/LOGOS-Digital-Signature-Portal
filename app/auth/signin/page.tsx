@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { Shield, Fingerprint, Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
+import { Fingerprint, Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
 import { signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -49,7 +50,8 @@ export default function SignInPage() {
       if (callbackUrl) {
         router.push(callbackUrl)
       } else {
-        const redirectUrl = session.user.role === 'ADMIN' ? '/admin/dashboard' : '/user/dashboard'
+        const redirectUrl =
+          session.user.role === 'ADMIN' ? '/admin/dashboard' : '/user/all-contracts'
         router.push(redirectUrl)
       }
     }
@@ -91,8 +93,14 @@ export default function SignInPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary rounded-lg mb-4">
-            <Shield className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <Image
+              src="/lagos2.jpg"
+              alt="Lagos State"
+              width={80}
+              height={80}
+              className="rounded-lg"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Lagos State Digital Signature Portal</h1>
           <p className="text-sm text-gray-600 mt-2">

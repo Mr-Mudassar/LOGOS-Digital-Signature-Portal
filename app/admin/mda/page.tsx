@@ -2,7 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import { Building2, Home, MapPin, Users, Scale, Eye, FileText, MoreVertical } from 'lucide-react'
+import {
+  Building2,
+  Home,
+  MapPin,
+  Users,
+  Scale,
+  Eye,
+  FileText,
+  MoreVertical,
+  Clock,
+  ShieldCheck,
+  AlertTriangle,
+  TrendingUp,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import ContractViewSheet from '@/components/ContractViewSheet'
@@ -31,20 +44,23 @@ interface MDAData {
 }
 
 const MDA_CATEGORIES = [
-  { key: 'ALL', label: 'All MDAs', icon: Building2, color: 'blue' },
-  { key: 'HOUSING', label: 'Housing', icon: Home, color: 'green' },
-  { key: 'LAND', label: 'Land', icon: MapPin, color: 'yellow' },
-  {
-    key: 'CIVIL_SERVICE_COMMISSION',
-    label: 'Civil Service Commission',
-    icon: Users,
-    color: 'purple',
-  },
-  { key: 'MINISTRY_OF_JUSTICE', label: 'Ministry of Justice', icon: Scale, color: 'red' },
+  { key: 'ALL', label: 'All MDAs' },
+  { key: 'HOUSING', label: 'Housing' },
+  { key: 'LAND', label: 'Land' },
+  { key: 'CIVIL_SERVICE_COMMISSION', label: 'Civil Service Commission' },
+  { key: 'MINISTRY_OF_JUSTICE', label: 'Ministry of Justice' },
+]
+
+const DATE_FILTERS = [
+  { key: '7', label: 'Last 7 Days' },
+  { key: '30', label: 'Last 30 Days' },
+  { key: '365', label: 'Last Year' },
+  { key: 'all', label: 'All Data' },
 ]
 
 export default function MDADashboard() {
   const [selectedCategory, setSelectedCategory] = useState('ALL')
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all')
   const [data, setData] = useState<MDAData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchingData, setFetchingData] = useState(false)
@@ -65,6 +81,7 @@ export default function MDADashboard() {
       const response = await axios.get('/api/mda/contracts', {
         params: {
           category: selectedCategory,
+          dateFilter: selectedDateFilter,
           page: currentPage,
           limit: itemsPerPage,
         },
@@ -79,16 +96,16 @@ export default function MDADashboard() {
     } finally {
       setFetchingData(false)
     }
-  }, [selectedCategory, currentPage, itemsPerPage])
+  }, [selectedCategory, selectedDateFilter, currentPage, itemsPerPage])
 
   useEffect(() => {
     fetchContracts()
   }, [fetchContracts])
 
-  // Reset to page 1 when category or itemsPerPage changes
+  // Reset to page 1 when category, date filter, or itemsPerPage changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedCategory, itemsPerPage])
+  }, [selectedCategory, selectedDateFilter, itemsPerPage])
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -126,59 +143,109 @@ export default function MDADashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
+      {/* Header with Dropdowns */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <Building2 className="w-8 h-8 text-primary" />
-          MDA Dashboard
-        </h1>
-        <p className="text-gray-600 mt-2">Ministries, Departments & Agencies Contract Management</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Building2 className="w-8 h-8 text-primary" />
+              MDA Dashboard
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Ministries, Departments & Agencies Contract Management
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {/* Category Dropdown */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+            >
+              {MDA_CATEGORIES.map((cat) => (
+                <option key={cat.key} value={cat.key}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Date Filter Dropdown */}
+            <select
+              value={selectedDateFilter}
+              onChange={(e) => setSelectedDateFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+            >
+              {DATE_FILTERS.map((filter) => (
+                <option key={filter.key} value={filter.key}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Category Tabs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        {MDA_CATEGORIES.map((category) => {
-          const Icon = category.icon
-          const count =
-            category.key === 'ALL'
-              ? Object.values(data?.counts || {}).reduce((sum, c) => sum + c, 0)
-              : data?.counts[category.key] || 0
-          const isActive = selectedCategory === category.key
+      {/* Static Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Total Contracts - Real Data */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Contracts</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{totalCount}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">
+            {selectedCategory === 'ALL'
+              ? 'All categories'
+              : MDA_CATEGORIES.find((c) => c.key === selectedCategory)?.label}
+          </p>
+        </div>
 
-          return (
-            <button
-              key={category.key}
-              onClick={() => setSelectedCategory(category.key)}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                isActive
-                  ? `border-${category.color}-500 bg-${category.color}-50`
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div className="flex flex-col items-center text-center">
-                <Icon
-                  className={`w-8 h-8 mb-2 ${
-                    isActive ? `text-${category.color}-600` : 'text-gray-600'
-                  }`}
-                />
-                <p
-                  className={`text-sm font-medium ${
-                    isActive ? `text-${category.color}-900` : 'text-gray-900'
-                  }`}
-                >
-                  {category.label}
-                </p>
-                <p
-                  className={`text-2xl font-bold mt-1 ${
-                    isActive ? `text-${category.color}-600` : 'text-gray-600'
-                  }`}
-                >
-                  {count}
-                </p>
-              </div>
-            </button>
-          )
-        })}
+        {/* Average Time to Sign - Static */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 opacity-60">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Avg Time to Sign</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">4.2 days</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <Clock className="w-8 h-8 text-green-600" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">Coming soon</p>
+        </div>
+
+        {/* Verification Success Rate - Static */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500 opacity-60">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Verification Success</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">97.8%</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <ShieldCheck className="w-8 h-8 text-purple-600" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">Coming soon</p>
+        </div>
+
+        {/* Flagged/Suspicious - Static */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500 opacity-60">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Flagged/Suspicious</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">3</p>
+            </div>
+            <div className="p-3 bg-red-100 rounded-full">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">Coming soon</p>
+        </div>
       </div>
 
       {/* Contracts Table */}

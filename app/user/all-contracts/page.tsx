@@ -3,11 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Shield, Plus, FileText, Clock } from 'lucide-react'
+import { Shield, FileText, Clock, Filter } from 'lucide-react'
 import axios from 'axios'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ContractCard from '@/components/dashboard/ContractCard'
-import CreateContractModal from '@/components/dashboard/CreateContractModal'
 import ContractViewSheet from '@/components/ContractViewSheet'
 
 export default function DashboardPage() {
@@ -16,13 +15,12 @@ export default function DashboardPage() {
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
@@ -52,13 +50,6 @@ export default function DashboardPage() {
       fetchContracts()
     }
   }, [status, fetchContracts])
-
-  const handleContractCreated = (contractId: string) => {
-    setIsModalOpen(false)
-    setSelectedContractId(contractId)
-    setIsSheetOpen(true)
-    fetchContracts()
-  }
 
   const handleOpenContract = (contractId: string) => {
     setSelectedContractId(contractId)
@@ -105,23 +96,14 @@ export default function DashboardPage() {
                 Manage your contracts, signatures, and pending documents.
               </p>
             </div>
-            {!isAdmin && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                New Contract
-              </button>
-            )}
           </div>
 
           {/* Recent Activities */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-2 mb-6">
-                <Clock className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-semibold">Recent Activities</h2>
+            <div className="flex justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gray-600" />
+                <span className="text-md font-medium text-gray-700">Filter by Status</span>
               </div>
 
               {/* Filter Tabs */}
@@ -178,15 +160,12 @@ export default function DashboardPage() {
               ) : contracts.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-600">No contracts found</p>
-                  <button onClick={() => setIsModalOpen(true)} className="btn-primary mt-4">
-                    Create Your First Contract
-                  </button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
+                <div className="space-y-0">
+                  <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border">
                     <div>Contract Title</div>
-                    <div>Category</div>
+                    <div>Type</div>
                     <div>Status</div>
                     <div>Initiator</div>
                     <div>Receiver</div>
@@ -252,12 +231,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <CreateContractModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleContractCreated}
-      />
-
+      {/* Contract View Sheet */}
       <ContractViewSheet
         isOpen={isSheetOpen}
         onClose={handleCloseSheet}

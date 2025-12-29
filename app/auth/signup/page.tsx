@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react'
+import Image from 'next/image'
+import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react'
 import axios from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -73,8 +74,14 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary rounded-lg mb-4">
-            <Shield className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <Image
+              src="/lagos2.jpg"
+              alt="Lagos State"
+              width={80}
+              height={80}
+              className="rounded-lg"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Lagos State Digital Signature Portal</h1>
           <p className="text-sm text-gray-600 mt-2">
@@ -102,7 +109,12 @@ export default function SignUpPage() {
                     <FormControl>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input type="text" placeholder="Enter your full name" className="pl-10" {...field} />
+                        <Input
+                          type="text"
+                          placeholder="Enter your full name"
+                          className="pl-10"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -119,7 +131,12 @@ export default function SignUpPage() {
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input type="email" placeholder="Enter your email" className="pl-10" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-10"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -147,7 +164,11 @@ export default function SignUpPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
                         </button>
                       </div>
                     </FormControl>
@@ -176,7 +197,11 @@ export default function SignUpPage() {
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
                         </button>
                       </div>
                     </FormControl>

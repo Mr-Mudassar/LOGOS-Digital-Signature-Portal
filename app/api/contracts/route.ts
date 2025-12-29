@@ -12,7 +12,7 @@ const createContractSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   initiatorName: z.string().min(1, 'Initiator name is required'),
   initiatorEmail: z.string().email().optional(),
-  receiverName: z.string().min(1, 'Receiver name is required'),
+  receiverName: z.string().optional(), // Made optional - will be captured when receiver signs up
   receiverEmail: z.string().email('Valid receiver email is required'),
   userContext: z.string().optional(),
   category: z

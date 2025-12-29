@@ -94,7 +94,7 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
     contract.signatures?.some((s: any) => s.type === 'INITIATOR') && contract.status === 'DRAFT'
 
   return (
-    <div className="grid grid-cols-7 gap-4 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group">
+    <div className="grid grid-cols-7 gap-4 px-4 py-2 border  hover:bg-gray-50 transition-colors group">
       <div className="cursor-pointer" onClick={() => onOpenContract(contract.id)}>
         <p className="font-medium text-gray-900 truncate" title={contract.title}>
           {contract.title}

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import Image from 'next/image'
 import {
   Shield,
   LayoutDashboard,
@@ -42,18 +43,20 @@ export default function Sidebar() {
     }
   }
 
-  // Admin navigation - Dashboard, All Contracts, and MDA
+  // Admin navigation - Dashboard, MDA, Provider Marketplace, Verification Portal, Admin Console
   const adminNavigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
-    { name: 'All Contracts', href: '/admin/all-contracts', icon: FileText },
     { name: 'MDA', href: '/admin/mda', icon: Building2 },
+    { name: 'Provider Marketplace', href: '/admin/provider-marketplace', icon: ShieldCheck },
+    { name: 'Verification Portal', href: '/admin/verification-portal', icon: Search },
+    { name: 'Admin Console', href: '/admin/console', icon: Shield },
   ]
 
-  // User navigation - Dashboard, My Contracts, Pending Signature
+  // User navigation - My Contracts, Create Contract, Pending Signature
   const userNavigation = [
-    { name: 'Dashboard', href: '/user/dashboard', icon: BarChart3 },
     { name: 'My Contracts', href: '/user/all-contracts', icon: LayoutDashboard },
-    { name: 'Pending Signature', href: '/user/pending-signature', icon: FileText },
+    { name: 'Create Contract', href: '/user/create-contract', icon: FileText },
+    { name: 'Pending Signature', href: '/user/pending-signature', icon: ShieldCheck },
   ]
 
   // Choose navigation based on role
@@ -64,8 +67,8 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Shield className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 relative">
+            <Image src="/lagos2.jpg" alt="Lagos State" fill className="object-contain" />
           </div>
           <div>
             <h1 className="font-bold text-gray-900">Lagos State Digital</h1>

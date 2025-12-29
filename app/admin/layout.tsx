@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      router.push('/user/dashboard')
+      router.push('/user/all-contracts')
     }
   }, [status, session, router])
 
