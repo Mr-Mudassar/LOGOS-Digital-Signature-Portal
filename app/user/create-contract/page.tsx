@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
-import { Upload } from 'lucide-react'
+import { FileSignature, Upload } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -22,17 +22,22 @@ import {
 } from '@/components/ui/form'
 
 // Zod validation schema - removed receiverName
-const contractSchema = z.object({
-  title: z
-    .string()
-    .min(5, 'Title must be at least 5 characters')
-    .max(60, 'Title must not exceed 60 characters'),
-  initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
-  initiatorEmail: z.string().email('Invalid email address'),
-  receiverEmail: z.string().email('Invalid email address'),
-  userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
-  category: z.string().min(1, 'Please select a category'),
-})
+const contractSchema = z
+  .object({
+    title: z
+      .string()
+      .min(5, 'Title must be at least 5 characters')
+      .max(60, 'Title must not exceed 60 characters'),
+    initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
+    initiatorEmail: z.string().email('Invalid email address'),
+    receiverEmail: z.string().email('Invalid email address'),
+    userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
+    category: z.string().min(1, 'Please select a category'),
+  })
+  .refine((data) => data.initiatorEmail !== data.receiverEmail, {
+    message: 'Second party email must be different from your email',
+    path: ['receiverEmail'],
+  })
 
 type ContractFormData = z.infer<typeof contractSchema>
 
@@ -61,6 +66,13 @@ export default function CreateContractPage() {
       category: 'OTHER',
     },
   })
+
+  // Autofill initiator email with session user's email
+  useEffect(() => {
+    if (session?.user?.email) {
+      form.setValue('initiatorEmail', session.user.email)
+    }
+  }, [session, form])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -148,7 +160,10 @@ export default function CreateContractPage() {
       <main className="max-w-8xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Contract</h1>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileSignature className="w-8 h-8 text-primary" />
+            Create New Contract
+          </h1>
           <p className="text-gray-600 mt-2">Define the contract details and generate using AI</p>
         </div>
 
@@ -254,8 +269,17 @@ export default function CreateContractPage() {
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="john@example.com" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="john@example.com"
+                            {...field}
+                            disabled
+                            className="bg-gray-50 cursor-not-allowed"
+                          />
                         </FormControl>
+                        <FormDescription className="text-xs">
+                          This is your registered email
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -274,47 +274,34 @@ export default function AdminStatsPage() {
       <div className="mt-8">
         <div className="flex justify-between items-center">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recent Activities</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Recent Activities ({totalCount})</h2>
             <p className="text-gray-600 mt-1">View and manage all contracts across the system</p>
-          </div>
-
-          {/* Status Filter */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Filter className="w-5 h-5 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {STATUS_FILTERS.map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setSelectedStatus(filter.key)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedStatus === filter.key
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* Contracts Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 relative">
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {selectedStatus === 'ALL'
-                    ? 'All Contracts'
-                    : STATUS_FILTERS.find((f) => f.key === selectedStatus)?.label}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {totalCount} {totalCount === 1 ? 'contract' : 'contracts'} found
-                </p>
+            {/* Status Filter */}
+            <div className="flex justify-between items-center ">
+              <div className="flex items-center gap-2 mb-2">
+                <Filter className="w-5 h-5 text-gray-600" />
+                <span className="text-md font-medium text-gray-700">Filter by Status:</span>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {STATUS_FILTERS.map((filter) => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setSelectedStatus(filter.key)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      selectedStatus === filter.key
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

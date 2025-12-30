@@ -103,21 +103,24 @@ Generate a complete, legally-sound contract that:
 CRITICAL - SIGNATURE SECTION:
 You MUST end the contract with this EXACT signature section (copy it exactly as shown):
 
-<div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #333;">
-  <h3>SIGNATURES</h3>
-  <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-    <div style="flex: 1; padding-right: 20px;">
-      <p><strong>FIRST PARTY (INITIATOR)</strong></p>
-      <p>Name: {{INITIATOR_NAME}}</p>
+<hr style="margin-top: 40px; margin-bottom: 30px; border: none; border-top: 2px solid #000;">
+
+<h3 style="margin-bottom: 30px;">SIGNATURES</h3>
+
+<table style="width: 100%; margin-top: 50px;">
+  <tr>
+    <td style="width: 50%; vertical-align: top; padding-right: 20px;">
+      <p style="margin-bottom: 15px;"><strong>FIRST PARTY (INITIATOR)</strong></p>
+      <p style="margin-bottom: 8px;">Name: {{INITIATOR_NAME}}</p>
       <p>Date: {{INITIATOR_DATE}}</p>
-    </div>
-    <div style="flex: 1; padding-left: 20px;">
-      <p><strong>SECOND PARTY (RECEIVER)</strong></p>
-      <p>Name: {{RECEIVER_NAME}}</p>
+    </td>
+    <td style="width: 50%; vertical-align: top; padding-left: 20px;">
+      <p style="margin-bottom: 15px;"><strong>SECOND PARTY (RECEIVER)</strong></p>
+      <p style="margin-bottom: 8px;">Name: {{RECEIVER_NAME}}</p>
       <p>Date: {{RECEIVER_DATE}}</p>
-    </div>
-  </div>
-</div>
+    </td>
+  </tr>
+</table>
 
 IMPORTANT: 
 - Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
