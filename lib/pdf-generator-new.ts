@@ -25,19 +25,7 @@ export async function generateContractPDF(options: PDFGenerationOptions): Promis
 
     const page = await browser.newPage()
 
-    // Get category label
-    const getCategoryLabel = (cat?: string) => {
-      const labels: Record<string, string> = {
-        HOUSING: 'Housing',
-        LAND: 'Land',
-        CIVIL_SERVICE_COMMISSION: 'Civil Service Commission',
-        MINISTRY_OF_JUSTICE: 'Ministry of Justice',
-        OTHER: 'Other',
-      }
-      return cat ? labels[cat] || cat : ''
-    }
-
-    // Create full HTML document with styling
+    // Create full HTML document with styling - no header, just content
     const fullHTML = `
 <!DOCTYPE html>
 <html lang="en">
@@ -77,41 +65,10 @@ export async function generateContractPDF(options: PDFGenerationOptions): Promis
     li { margin-bottom: 6px; }
     strong { font-weight: bold; }
     em { font-style: italic; }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #333;
-    }
-    
-    .metadata {
-      font-size: 10pt;
-      color: #555;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>${contractTitle}</h1>
-    <div class="metadata">
-      ${category ? `<div><strong>Category:</strong> ${getCategoryLabel(category)}</div>` : ''}
-      ${
-        createdAt
-          ? `<div><strong>Date:</strong> ${new Date(createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}</div>`
-          : ''
-      }
-    </div>
-  </div>
-  
-  <div class="content">
-    ${htmlContent}
-  </div>
+  ${htmlContent}
 </body>
 </html>
     `

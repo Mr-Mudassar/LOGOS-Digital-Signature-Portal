@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import Sidebar from '@/components/dashboard/Sidebar'
 import ContractViewSheet from '@/components/ContractViewSheet'
 import axios from 'axios'
 import { Upload } from 'lucide-react'
@@ -154,26 +153,25 @@ export default function CreateContractPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Create New Contract</h1>
-            <p className="text-gray-600 mt-2">Define the contract details and generate using AI</p>
-          </div>
+    <>
+      <main className="max-w-8xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Create New Contract</h1>
+          <p className="text-gray-600 mt-2">Define the contract details and generate using AI</p>
+        </div>
 
-          {/* Form */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+        {/* Form */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {/* Contract Title */}
                 <FormField
                   control={form.control}
@@ -218,131 +216,128 @@ export default function CreateContractPage() {
                     </FormItem>
                   )}
                 />
-
-                {/* Upload Document */}
-                <div>
-                  <FormLabel>Upload Reference Document (Optional)</FormLabel>
-                  <div className="mt-2">
-                    <label className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
-                      <div className="text-center">
-                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <span className="text-sm text-gray-600">
-                          {file ? file.name : 'Choose DOCX File (Optional)'}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">Only DOCX files, up to 10MB</p>
-                      </div>
-                      <input
-                        type="file"
-                        onChange={handleFileChange}
-                        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {/* Primary Party */}
-                <div>
-                  <FormLabel className="text-base font-semibold">
-                    Primary Party (Initiator)
-                  </FormLabel>
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <FormField
-                      control={form.control}
-                      name="initiatorName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+              </div>
+              {/* Upload Document */}
+              <div>
+                <FormLabel>Upload Reference Document (Optional)</FormLabel>
+                <div className="mt-2">
+                  <label className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
+                    <div className="text-center">
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <span className="text-sm text-gray-600">
+                        {file ? file.name : 'Choose DOCX File (Optional)'}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">Only DOCX files, up to 10MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
                     />
-                    <FormField
-                      control={form.control}
-                      name="initiatorEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  </label>
                 </div>
+              </div>
 
-                {/* Second Party - Email Only */}
-                <div>
-                  <FormLabel className="text-base font-semibold">Second Party</FormLabel>
+              {/* Primary Party */}
+              <div>
+                <FormLabel className="text-base font-semibold">Primary Party (Initiator)</FormLabel>
+                <div className="grid grid-cols-2 gap-4 mt-3">
                   <FormField
                     control={form.control}
-                    name="receiverEmail"
+                    name="initiatorName"
                     render={({ field }) => (
-                      <FormItem className="mt-3">
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="initiatorEmail"
+                    render={({ field }) => (
+                      <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="jane@example.com" {...field} />
+                          <Input type="email" placeholder="john@example.com" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          The second party&apos;s name will be captured when they sign up to sign
-                          the contract
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              </div>
 
-                {/* Additional Context */}
+              {/* Second Party - Email Only */}
+              <div>
+                <FormLabel className="text-base font-semibold">Second Party</FormLabel>
                 <FormField
                   control={form.control}
-                  name="userContext"
+                  name="receiverEmail"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Context (Optional)</FormLabel>
+                    <FormItem className="mt-3">
+                      <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <textarea
-                          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                          rows={4}
-                          placeholder="Add any additional context or instructions for the contract..."
-                          maxLength={500}
-                          {...field}
-                        />
+                        <Input type="email" placeholder="jane@example.com" {...field} />
                       </FormControl>
-                      <div className="flex items-center justify-between">
-                        <FormMessage />
-                        <p className="text-xs text-gray-500">{field.value?.length || 0}/500</p>
-                      </div>
+                      <FormDescription>
+                        The second party&apos;s name will be captured when they sign up to sign the
+                        contract
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Submit Buttons */}
-                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/user/all-contracts')}
-                    className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                    disabled={form.formState.isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <LoadingButton
-                    type="submit"
-                    loading={form.formState.isSubmitting}
-                    loadingText="Generating..."
-                  >
-                    Generate Contract
-                  </LoadingButton>
-                </div>
-              </form>
-            </Form>
-          </div>
+              {/* Additional Context */}
+              <FormField
+                control={form.control}
+                name="userContext"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Context (Optional)</FormLabel>
+                    <FormControl>
+                      <textarea
+                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                        rows={4}
+                        placeholder="Add any additional context or instructions for the contract..."
+                        maxLength={500}
+                        {...field}
+                      />
+                    </FormControl>
+                    <div className="flex items-center justify-between">
+                      <FormMessage />
+                      <p className="text-xs text-gray-500">{field.value?.length || 0}/500</p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit Buttons */}
+              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => router.push('/user/all-contracts')}
+                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                  disabled={form.formState.isSubmitting}
+                >
+                  Cancel
+                </button>
+                <LoadingButton
+                  type="submit"
+                  loading={form.formState.isSubmitting}
+                  loadingText="Generating..."
+                >
+                  Generate Contract
+                </LoadingButton>
+              </div>
+            </form>
+          </Form>
         </div>
       </main>
 
@@ -353,6 +348,6 @@ export default function CreateContractPage() {
         contractId={createdContractId}
         onUpdate={() => {}}
       />
-    </div>
+    </>
   )
 }

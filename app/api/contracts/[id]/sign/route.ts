@@ -78,7 +78,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'You have already signed this contract' }, { status: 400 })
     }
 
-    // Format date and time
+    // Format date and time with timezone
     const signedDate = new Date()
     const formattedDate = signedDate.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -89,7 +89,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       hour: '2-digit',
       minute: '2-digit',
     })
-    const formattedDateTime = `${formattedDate} at ${formattedTime}`
+    // Get timezone abbreviation
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const timeZoneAbbr = signedDate
+      .toLocaleTimeString('en-US', {
+        timeZoneName: 'short',
+      })
+      .split(' ')
+      .slice(-2)
+      .join(' ')
+    const formattedDateTime = `${formattedDate} at ${formattedTime} ${timeZoneAbbr}`
 
     const signatureData = `${signerName} - ${formattedDateTime}`
 

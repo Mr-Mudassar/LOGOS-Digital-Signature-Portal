@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
-import Sidebar from '@/components/dashboard/Sidebar'
 import { ArrowLeft, Edit, FileSignature, Send, FileText } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { toast } from 'sonner'
@@ -157,187 +156,174 @@ export default function ContractDetailsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </main>
-      </div>
+      <main className="flex-1 flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </main>
     )
   }
 
   if (error || !contract) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">{error || 'Contract not found'}</p>
-            <button
-              onClick={() => router.push('/user/all-contracts')}
-              className="text-primary hover:underline"
-            >
-              Back to Contracts
-            </button>
-          </div>
-        </main>
-      </div>
+      <main className="flex-1 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Contract not found'}</p>
+          <button
+            onClick={() => router.push('/user/all-contracts')}
+            className="text-primary hover:underline"
+          >
+            Back to Contracts
+          </button>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-6">
-            <button
-              onClick={() => router.push('/user/all-contracts')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Contracts
-            </button>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{contract.title}</h1>
-                <p className="text-gray-600 mt-1">
-                  Created {new Date(contract.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  contract.status === 'DRAFT'
-                    ? 'bg-gray-100 text-gray-800'
-                    : contract.status === 'AWAITING_SIGNATURE'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-green-100 text-green-800'
-                }`}
-              >
-                {contract.status.replace(/_/g, ' ')}
-              </span>
+    <>
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/user/all-contracts')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Contracts
+          </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{contract.title}</h1>
+              <p className="text-gray-600 mt-1">
+                Created {new Date(contract.createdAt).toLocaleDateString()}
+              </p>
             </div>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                contract.status === 'DRAFT'
+                  ? 'bg-gray-100 text-gray-800'
+                  : contract.status === 'AWAITING_SIGNATURE'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-green-100 text-green-800'
+              }`}
+            >
+              {contract.status.replace(/_/g, ' ')}
+            </span>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 mb-6">
-            {contract.pdfUrl && contract.status === 'COMPLETED' && (
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-6">
+          {contract.pdfUrl && contract.status === 'COMPLETED' && (
+            <LoadingButton
+              onClick={() => setShowPDFViewer(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              View PDF Contract
+            </LoadingButton>
+          )}
+          {canEdit && !isEditing && (
+            <>
               <LoadingButton
-                onClick={() => setShowPDFViewer(true)}
+                onClick={handleEdit}
                 variant="outline"
                 className="flex items-center gap-2"
               >
-                <FileText className="w-4 h-4" />
-                View PDF Contract
+                <Edit className="w-4 h-4" />
+                Edit Content
               </LoadingButton>
-            )}
-            {canEdit && !isEditing && (
-              <>
-                <LoadingButton
-                  onClick={handleEdit}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit Content
-                </LoadingButton>
-                <LoadingButton
-                  onClick={() => setShowSignConfirm(true)}
-                  className="flex items-center gap-2"
-                >
-                  <FileSignature className="w-4 h-4" />
-                  Sign Contract
-                </LoadingButton>
-              </>
-            )}
-            {canSend && (
               <LoadingButton
-                onClick={() => setShowSendConfirm(true)}
+                onClick={() => setShowSignConfirm(true)}
                 className="flex items-center gap-2"
               >
-                <Send className="w-4 h-4" />
-                Send to Receiver
+                <FileSignature className="w-4 h-4" />
+                Sign Contract
               </LoadingButton>
-            )}
+            </>
+          )}
+          {canSend && (
+            <LoadingButton
+              onClick={() => setShowSendConfirm(true)}
+              className="flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Send to Receiver
+            </LoadingButton>
+          )}
+        </div>
+
+        {/* Contract Content */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Contract Parties */}
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <h3 className="font-semibold text-gray-900 mb-4">Contract Parties</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-600">First Party (Initiator)</p>
+                <p className="font-medium">{contract.initiatorName}</p>
+                <p className="text-sm text-gray-500">{contract.initiatorEmail}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Second Party</p>
+                <p className="font-medium">{contract.receiverName || 'Pending'}</p>
+                <p className="text-sm text-gray-500">{contract.receiverEmail}</p>
+              </div>
+            </div>
           </div>
 
           {/* Contract Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Contract Parties */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-gray-900 mb-4">Contract Parties</h3>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600">First Party (Initiator)</p>
-                  <p className="font-medium">{contract.initiatorName}</p>
-                  <p className="text-sm text-gray-500">{contract.initiatorEmail}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Second Party</p>
-                  <p className="font-medium">{contract.receiverName || 'Pending'}</p>
-                  <p className="text-sm text-gray-500">{contract.receiverEmail}</p>
+          <div className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Contract Content</h3>
+            {isEditing ? (
+              <div>
+                <ContractEditor content={editedContent} onChange={setEditedContent} />
+                <div className="flex gap-3 mt-6 pt-6 border-t">
+                  <LoadingButton onClick={handleCancelEdit} variant="outline">
+                    Cancel
+                  </LoadingButton>
+                  <LoadingButton onClick={handleSaveEdit} loading={saving} loadingText="Saving...">
+                    Save Changes
+                  </LoadingButton>
                 </div>
               </div>
-            </div>
-
-            {/* Contract Content */}
-            <div className="p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Contract Content</h3>
-              {isEditing ? (
-                <div>
-                  <ContractEditor content={editedContent} onChange={setEditedContent} />
-                  <div className="flex gap-3 mt-6 pt-6 border-t">
-                    <LoadingButton onClick={handleCancelEdit} variant="outline">
-                      Cancel
-                    </LoadingButton>
-                    <LoadingButton
-                      onClick={handleSaveEdit}
-                      loading={saving}
-                      loadingText="Saving..."
-                    >
-                      Save Changes
-                    </LoadingButton>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="prose prose-sm max-w-none prose-headings:font-semibold prose-p:text-gray-700 prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700"
-                  dangerouslySetInnerHTML={{
-                    __html: contract.aiGeneratedContent || '<p>No content available</p>',
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Signatures */}
-            {contract.signatures.length > 0 && (
-              <div className="p-6 border-t border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">Signatures</h3>
-                <div className="space-y-3">
-                  {contract.signatures.map((signature, index) => (
-                    <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-green-900">
-                            {signature.user.name || signature.user.email}
-                          </p>
-                          <p className="text-sm text-green-700">
-                            {signature.type === 'INITIATOR' ? 'First Party' : 'Second Party'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-green-600">
-                            Signed on {new Date(signature.signedAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            ) : (
+              <div
+                className="prose prose-sm max-w-none prose-headings:font-semibold prose-p:text-gray-700 prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700"
+                dangerouslySetInnerHTML={{
+                  __html: contract.aiGeneratedContent || '<p>No content available</p>',
+                }}
+              />
             )}
           </div>
+
+          {/* Signatures */}
+          {contract.signatures.length > 0 && (
+            <div className="p-6 border-t border-gray-200">
+              <h3 className="font-semibold text-gray-900 mb-4">Signatures</h3>
+              <div className="space-y-3">
+                {contract.signatures.map((signature, index) => (
+                  <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium text-green-900">
+                          {signature.user.name || signature.user.email}
+                        </p>
+                        <p className="text-sm text-green-700">
+                          {signature.type === 'INITIATOR' ? 'First Party' : 'Second Party'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600">
+                          Signed on {new Date(signature.signedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -366,7 +352,7 @@ export default function ContractDetailsPage() {
         loading={sending}
       />
 
-      {contract.pdfUrl && (
+      {contract?.pdfUrl && (
         <PDFViewerSheet
           isOpen={showPDFViewer}
           onClose={() => setShowPDFViewer(false)}
@@ -374,6 +360,6 @@ export default function ContractDetailsPage() {
           contractTitle={contract.title}
         />
       )}
-    </div>
+    </>
   )
 }

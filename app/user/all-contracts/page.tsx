@@ -3,9 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Shield, FileText, Clock, Filter } from 'lucide-react'
+import { Shield, FileText, Filter } from 'lucide-react'
 import axios from 'axios'
-import Sidebar from '@/components/dashboard/Sidebar'
 import ContractCard from '@/components/dashboard/ContractCard'
 import ContractViewSheet from '@/components/ContractViewSheet'
 
@@ -80,154 +79,148 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+    <div className="max-w-8xl mx-auto px-6 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-primary" />
+            My Contracts
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage your contracts, signatures, and pending documents.
+          </p>
+        </div>
+      </div>
 
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <FileText className="w-8 h-8 text-primary" />
-                My Contracts
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your contracts, signatures, and pending documents.
-              </p>
-            </div>
+      {/* Recent Activities */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="flex justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <span className="text-md font-medium text-gray-700">Filter by Status</span>
           </div>
 
-          {/* Recent Activities */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-600" />
-                <span className="text-md font-medium text-gray-700">Filter by Status</span>
-              </div>
+          {/* Filter Tabs */}
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('DRAFT')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'DRAFT'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Drafts
+            </button>
+            <button
+              onClick={() => setFilter('AWAITING_SIGNATURE')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'AWAITING_SIGNATURE'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Awaiting Signature
+            </button>
+            <button
+              onClick={() => setFilter('COMPLETED')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'COMPLETED'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Completed
+            </button>
+          </div>
+        </div>
 
-              {/* Filter Tabs */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'all'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('DRAFT')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'DRAFT'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Drafts
-                </button>
-                <button
-                  onClick={() => setFilter('AWAITING_SIGNATURE')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'AWAITING_SIGNATURE'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Awaiting Signature
-                </button>
-                <button
-                  onClick={() => setFilter('COMPLETED')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filter === 'COMPLETED'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Completed
-                </button>
-              </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading contracts...</p>
             </div>
+          ) : contracts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No contracts found</p>
+            </div>
+          ) : (
+            <div className="space-y-0">
+              <div className="grid grid-cols-7 gap-4 px-4 py-4 text-sm font-medium text-gray-600 border">
+                <div>Contract Title</div>
+                <div>Type</div>
+                <div>Status</div>
+                <div>Initiator</div>
+                <div>Receiver</div>
+                <div>Created</div>
+                <div className="text-center">Actions</div>
+              </div>
+              {contracts.map((contract) => (
+                <ContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onUpdate={fetchContracts}
+                  onOpenContract={handleOpenContract}
+                />
+              ))}
 
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading contracts...</p>
-                </div>
-              ) : contracts.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600">No contracts found</p>
-                </div>
-              ) : (
-                <div className="space-y-0">
-                  <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border">
-                    <div>Contract Title</div>
-                    <div>Type</div>
-                    <div>Status</div>
-                    <div>Initiator</div>
-                    <div>Receiver</div>
-                    <div>Created</div>
-                    <div className="text-center">Actions</div>
+              {/* Pagination Controls */}
+              {totalCount > 0 && (
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Items per page:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={40}>40</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-sm text-gray-600 ml-4">
+                      Showing {(currentPage - 1) * itemsPerPage + 1}-
+                      {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
+                    </span>
                   </div>
-                  {contracts.map((contract) => (
-                    <ContractCard
-                      key={contract.id}
-                      contract={contract}
-                      onUpdate={fetchContracts}
-                      onOpenContract={handleOpenContract}
-                    />
-                  ))}
 
-                  {/* Pagination Controls */}
-                  {totalCount > 0 && (
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Items per page:</span>
-                        <select
-                          value={itemsPerPage}
-                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                          className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value={10}>10</option>
-                          <option value={20}>20</option>
-                          <option value={30}>30</option>
-                          <option value={40}>40</option>
-                          <option value={50}>50</option>
-                        </select>
-                        <span className="text-sm text-gray-600 ml-4">
-                          Showing {(currentPage - 1) * itemsPerPage + 1}-
-                          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                          disabled={currentPage === 1}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="text-sm text-gray-600">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                          disabled={currentPage === totalPages}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 

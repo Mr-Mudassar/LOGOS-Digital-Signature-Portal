@@ -34,6 +34,7 @@ interface Contract {
   id: string
   title: string
   status: string
+  category: string
   aiGeneratedContent: string | null
   initiatorName: string
   initiatorEmail: string | null
@@ -262,16 +263,15 @@ export default function ContractViewSheet({
               <>
                 {/* Action Buttons */}
                 <div className="flex gap-3 justify-end border-b pb-4">
-                  {contract.pdfUrl && contract.status === 'COMPLETED' && (
-                    <LoadingButton
-                      onClick={() => setShowPDFViewer(true)}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      View PDF Contract
-                    </LoadingButton>
-                  )}
+                  {/* Show PDF preview button for all contracts, not just completed */}
+                  <LoadingButton
+                    onClick={() => setShowPDFViewer(true)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Preview as PDF
+                  </LoadingButton>
                   {canEdit && !isEditing && (
                     <>
                       <LoadingButton
@@ -420,12 +420,16 @@ export default function ContractViewSheet({
       )}
 
       {/* PDF Viewer Sheet */}
-      {contract && contract.pdfUrl && (
+      {contract && (
         <PDFViewerSheet
           isOpen={showPDFViewer}
           onClose={() => setShowPDFViewer(false)}
           pdfUrl={contract.pdfUrl}
+          contractId={contract.id}
           contractTitle={contract.title}
+          contractContent={contract.aiGeneratedContent || undefined}
+          category={contract.category}
+          createdAt={contract.createdAt}
         />
       )}
     </>

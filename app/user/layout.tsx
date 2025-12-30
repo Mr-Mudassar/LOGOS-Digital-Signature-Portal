@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Sidebar from '@/components/dashboard/Sidebar'
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
@@ -34,5 +35,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     return null
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">{children}</div>
+    </div>
+  )
 }

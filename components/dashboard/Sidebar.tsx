@@ -9,7 +9,6 @@ import {
   Shield,
   LayoutDashboard,
   FileText,
-  User,
   LogOut,
   Search,
   BarChart3,
@@ -32,6 +31,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
 
+  // Role-based check within the component
   const isAdmin = session?.user?.role === 'ADMIN'
 
   const handleSignOut = async () => {
@@ -43,7 +43,7 @@ export default function Sidebar() {
     }
   }
 
-  // Admin navigation - Dashboard, MDA, Provider Marketplace, Verification Portal, Admin Console
+  // Admin navigation
   const adminNavigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
     { name: 'MDA', href: '/admin/mda', icon: Building2 },
@@ -52,7 +52,7 @@ export default function Sidebar() {
     { name: 'Admin Console', href: '/admin/console', icon: Shield },
   ]
 
-  // User navigation - My Contracts, Create Contract, Pending Signature
+  // User navigation
   const userNavigation = [
     { name: 'My Contracts', href: '/user/all-contracts', icon: LayoutDashboard },
     { name: 'Create Contract', href: '/user/create-contract', icon: FileText },
