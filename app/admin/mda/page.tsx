@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import {
   Building2,
@@ -18,7 +19,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import ContractViewSheet from '@/components/ContractViewSheet'
 import PDFViewerSheet from '@/components/PDFViewerSheet'
 
 interface Contract {
@@ -59,13 +59,12 @@ const DATE_FILTERS = [
 ]
 
 export default function MDADashboard() {
+  const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [selectedDateFilter, setSelectedDateFilter] = useState('all')
   const [data, setData] = useState<MDAData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchingData, setFetchingData] = useState(false)
-  const [viewingContractId, setViewingContractId] = useState<string | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showPDFViewer, setShowPDFViewer] = useState(false)
   const [selectedPDFUrl, setSelectedPDFUrl] = useState<string | null>(null)
   const [selectedPDFTitle, setSelectedPDFTitle] = useState<string>('')
@@ -132,13 +131,7 @@ export default function MDADashboard() {
   }
 
   const handleViewContract = (contractId: string) => {
-    setViewingContractId(contractId)
-    setIsSheetOpen(true)
-  }
-
-  const handleCloseView = () => {
-    setIsSheetOpen(false)
-    setViewingContractId(null)
+    router.push(`/contracts/${contractId}`)
   }
 
   return (
@@ -342,32 +335,15 @@ export default function MDADashboard() {
                       {new Date(contract.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <DropdownMenu
-                        trigger={
-                          <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors">
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                        }
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleViewContract(contract.id)
+                        }}
+                        className="font-bold text-primary-dark text-sm"
                       >
-                        <DropdownMenuItem
-                          onClick={() => handleViewContract(contract.id)}
-                          icon={<Eye className="w-4 h-4" />}
-                        >
-                          View Contract
-                        </DropdownMenuItem>
-                        {contract.pdfUrl && contract.status === 'COMPLETED' && (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedPDFUrl(contract.pdfUrl!)
-                              setSelectedPDFTitle(contract.title)
-                              setShowPDFViewer(true)
-                            }}
-                            icon={<FileText className="w-4 h-4" />}
-                          >
-                            View PDF Contract
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenu>
+                        View Details
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -425,14 +401,6 @@ export default function MDADashboard() {
           </div>
         )}
       </div>
-
-      {/* Contract View Sheet */}
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseView}
-        contractId={viewingContractId}
-        onUpdate={fetchContracts}
-      />
 
       {/* PDF Viewer Sheet */}
       {selectedPDFUrl && (

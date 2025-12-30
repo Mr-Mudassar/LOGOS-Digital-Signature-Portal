@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         initiatorId: session.user.id,
         initiatorName: data.initiatorName,
         initiatorEmail: data.initiatorEmail || session.user.email,
-        receiverName: data.receiverName,
+        receiverName: data.receiverName || 'To be determined',
         receiverEmail: data.receiverEmail,
         userContext: data.userContext,
         category: data.category || 'OTHER',

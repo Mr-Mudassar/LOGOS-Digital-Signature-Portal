@@ -88,17 +88,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const formattedTime = signedDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
+      timeZoneName: 'short',
     })
-    // Get timezone abbreviation
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const timeZoneAbbr = signedDate
-      .toLocaleTimeString('en-US', {
-        timeZoneName: 'short',
-      })
-      .split(' ')
-      .slice(-2)
-      .join(' ')
-    const formattedDateTime = `${formattedDate} at ${formattedTime} ${timeZoneAbbr}`
+    const formattedDateTime = `${formattedDate} at ${formattedTime}`
 
     const signatureData = `${signerName} - ${formattedDateTime}`
 

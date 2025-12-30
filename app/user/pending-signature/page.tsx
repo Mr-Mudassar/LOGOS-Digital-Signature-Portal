@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Shield, FileSignature } from 'lucide-react'
 import axios from 'axios'
 import ContractCard from '@/components/dashboard/ContractCard'
-import ContractViewSheet from '@/components/ContractViewSheet'
 
 export default function PendingSignaturePage() {
   const { data: session, status } = useSession()
@@ -15,8 +14,6 @@ export default function PendingSignaturePage() {
   const signingLink = searchParams.get('signingLink')
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
@@ -34,14 +31,11 @@ export default function PendingSignaturePage() {
       setTotalCount(response.data.pagination.total)
       setTotalPages(response.data.pagination.totalPages)
 
-      // Auto-open contract if signingLink is provided
+      // Auto-navigate to contract if signingLink is provided
       if (signingLink && response.data.contracts.length > 0) {
         const contract = response.data.contracts.find((c: any) => c.signingLink === signingLink)
         if (contract) {
-          setSelectedContractId(contract.id)
-          setIsSheetOpen(true)
-          // Clear the signingLink from URL after opening
-          router.replace('/user/pending-signature', { scroll: false })
+          router.push(`/contracts/${contract.id}`)
         }
       }
     } catch (error) {
@@ -64,13 +58,7 @@ export default function PendingSignaturePage() {
   }, [status, router, signingLink, fetchPendingContracts])
 
   const handleOpenContract = (contractId: string) => {
-    setSelectedContractId(contractId)
-    setIsSheetOpen(true)
-  }
-
-  const handleCloseSheet = () => {
-    setIsSheetOpen(false)
-    setSelectedContractId(null)
+    router.push(`/contracts/${contractId}`)
   }
 
   // Reset to page 1 when itemsPerPage changes
@@ -98,7 +86,7 @@ export default function PendingSignaturePage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <FileSignature className="w-8 h-8 text-primary" />
-            Pending Signature
+            Pending Signature ({totalCount})
           </h1>
           <p className="text-gray-600 mt-1">
             Contracts shared with you that require your signature
@@ -108,7 +96,7 @@ export default function PendingSignaturePage() {
 
       {/* Contracts List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+        {/* <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-2 mb-2">
             <FileSignature className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold">Awaiting Your Signature</h2>
@@ -117,7 +105,7 @@ export default function PendingSignaturePage() {
             {totalCount} {totalCount === 1 ? 'contract' : 'contracts'} waiting for your review and
             signature
           </p>
-        </div>
+        </div> */}
 
         <div className="p-6">
           {loading ? (
@@ -136,8 +124,8 @@ export default function PendingSignaturePage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-7 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b border-gray-200">
+            <div className="space-y-0">
+              <div className="grid grid-cols-7 gap-4 px-4 py-4 text-sm font-medium text-gray-600 border-b border-gray-200 border">
                 <div>Contract Title</div>
                 <div>Category</div>
                 <div>Status</div>
@@ -152,6 +140,7 @@ export default function PendingSignaturePage() {
                   contract={contract}
                   onUpdate={fetchPendingContracts}
                   onOpenContract={handleOpenContract}
+                  isPendingSignature={true}
                 />
               ))}
 
@@ -202,13 +191,6 @@ export default function PendingSignaturePage() {
           )}
         </div>
       </div>
-
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseSheet}
-        contractId={selectedContractId}
-        onUpdate={fetchPendingContracts}
-      />
     </div>
   )
 }

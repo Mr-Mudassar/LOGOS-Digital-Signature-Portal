@@ -12,9 +12,15 @@ interface ContractCardProps {
   contract: any
   onUpdate: () => void
   onOpenContract: (contractId: string) => void
+  isPendingSignature?: boolean
 }
 
-export default function ContractCard({ contract, onUpdate, onOpenContract }: ContractCardProps) {
+export default function ContractCard({
+  contract,
+  onUpdate,
+  onOpenContract,
+  isPendingSignature = false,
+}: ContractCardProps) {
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -94,102 +100,57 @@ export default function ContractCard({ contract, onUpdate, onOpenContract }: Con
     contract.signatures?.some((s: any) => s.type === 'INITIATOR') && contract.status === 'DRAFT'
 
   return (
-    <div className="grid grid-cols-7 gap-4 px-4 py-2 border  hover:bg-gray-50 transition-colors group">
-      <div className="cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <p className="font-medium text-gray-900 truncate mt-2" title={contract.title}>
-          {contract.title}
-        </p>
-      </div>
+    <div className="grid grid-cols-7 gap-4 px-4 py-2 border  hover:bg-gray-50 transition-colors group items-center">
+      <p className="font-medium text-gray-900 truncate " title={contract.title}>
+        {contract.title}
+      </p>
 
-      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
+      <div>
         <p className="text-gray-700">{getCategory()}</p>
       </div>
 
-      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        {getStatusBadge(contract.status)}
+      <div>{getStatusBadge(contract.status)}</div>
+
+      <div className="min-w-0">
+        <p className="text-gray-700 truncate">{contract.initiator.name || 'Unknown'}</p>
+        {contract.initiator.email && (
+          <p className="text-xs text-gray-500 truncate">{contract.initiator.email}</p>
+        )}
       </div>
 
-      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <div className="min-w-0">
-          <p className="text-gray-700 truncate">{contract.initiator.name || 'Unknown'}</p>
-          {contract.initiator.email && (
-            <p className="text-xs text-gray-500 truncate">{contract.initiator.email}</p>
-          )}
-        </div>
+      <div className="min-w-0">
+        <p className="text-gray-700 truncate">{contract.receiverName || 'Not assigned'}</p>
+        {contract.receiverEmail && (
+          <p className="text-xs text-gray-500 truncate">{contract.receiverEmail}</p>
+        )}
       </div>
 
-      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
-        <div className="min-w-0">
-          <p className="text-gray-700 truncate">{contract.receiverName || 'Not assigned'}</p>
-          {contract.receiverEmail && (
-            <p className="text-xs text-gray-500 truncate">{contract.receiverEmail}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center cursor-pointer" onClick={() => onOpenContract(contract.id)}>
+      <div>
         <p className="text-sm text-gray-600 truncate">{formatDateTime(contract.updatedAt)}</p>
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <DropdownMenu
-          trigger={
-            <button
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-              title="Actions"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          }
-        >
-          <DropdownMenuItem
-            onClick={(e) => handleAction(e, 'view')}
-            icon={<Eye className="w-4 h-4" />}
+        {isPendingSignature ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenContract(contract.id)
+            }}
+            className="font-bold text-primary-dark text-sm"
           >
-            View
-          </DropdownMenuItem>
-
-          {contract.pdfUrl && contract.status === 'COMPLETED' && (
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowPDFViewer(true)
-              }}
-              icon={<FileText className="w-4 h-4" />}
-            >
-              View PDF Contract
-            </DropdownMenuItem>
-          )}
-
-          {canSign && (
-            <DropdownMenuItem
-              onClick={(e) => handleAction(e, 'sign')}
-              icon={<FileSignature className="w-4 h-4" />}
-            >
-              Sign Contract
-            </DropdownMenuItem>
-          )}
-
-          {canSend && (
-            <DropdownMenuItem
-              onClick={(e) => handleAction(e, 'send')}
-              icon={<Send className="w-4 h-4" />}
-            >
-              Send to Second Party
-            </DropdownMenuItem>
-          )}
-
-          {canDelete && (
-            <DropdownMenuItem
-              onClick={handleDeleteClick}
-              icon={<Trash2 className="w-4 h-4" />}
-              variant="danger"
-              disabled={deleting}
-            >
-              Delete
-            </DropdownMenuItem>
-          )}
-        </DropdownMenu>
+            Sign Contract
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenContract(contract.id)
+            }}
+            className="font-bold text-primary-dark text-sm"
+          >
+            View Details
+          </button>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

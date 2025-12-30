@@ -7,7 +7,7 @@ interface SendContractInvitationParams {
   receiverName: string
   initiatorName: string
   contractTitle: string
-  signingLink: string
+  contractId: string
 }
 
 interface SendContractCompletionParams {
@@ -22,8 +22,8 @@ interface SendContractCompletionParams {
  * Send contract invitation email to receiver
  */
 export async function sendContractInvitation(params: SendContractInvitationParams) {
-  const { receiverEmail, receiverName, initiatorName, contractTitle, signingLink } = params
-  const signingUrl = `${process.env.APP_URL}/user/pending-signature?signingLink=${signingLink}`
+  const { receiverEmail, receiverName, initiatorName, contractTitle, contractId } = params
+  const signingUrl = `${process.env.APP_URL}/contracts/${contractId}`
 
   const msg = {
     to: receiverEmail,

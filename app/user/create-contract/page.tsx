@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import ContractViewSheet from '@/components/ContractViewSheet'
 import axios from 'axios'
 import { Upload } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -50,8 +49,6 @@ export default function CreateContractPage() {
   const { data: session } = useSession()
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [createdContractId, setCreatedContractId] = useState<string | null>(null)
 
   const form = useForm<ContractFormData>({
     resolver: zodResolver(contractSchema),
@@ -132,9 +129,8 @@ export default function CreateContractPage() {
 
       toast.success('Contract created successfully!', { id: 'contract-generation' })
 
-      // Open the contract in the side sheet
-      setCreatedContractId(contractId)
-      setIsSheetOpen(true)
+      // Navigate to the contract page
+      router.push(`/contracts/${contractId}`)
 
       // Reset form
       form.reset()
@@ -145,11 +141,6 @@ export default function CreateContractPage() {
       setError(errorMessage)
       toast.error(errorMessage, { id: 'contract-generation' })
     }
-  }
-
-  const handleCloseSheet = () => {
-    setIsSheetOpen(false)
-    setCreatedContractId(null)
   }
 
   return (
@@ -340,14 +331,6 @@ export default function CreateContractPage() {
           </Form>
         </div>
       </main>
-
-      {/* Contract View Sheet */}
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseSheet}
-        contractId={createdContractId}
-        onUpdate={() => {}}
-      />
     </>
   )
 }

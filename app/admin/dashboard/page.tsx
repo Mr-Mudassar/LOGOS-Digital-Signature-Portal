@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import {
   FileCheck,
@@ -14,7 +15,6 @@ import {
   Eye,
   MoreVertical,
 } from 'lucide-react'
-import ContractViewSheet from '@/components/ContractViewSheet'
 import PDFViewerSheet from '@/components/PDFViewerSheet'
 import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
@@ -54,14 +54,13 @@ const STATUS_FILTERS = [
 ]
 
 export default function AdminStatsPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [contracts, setContracts] = useState<Contract[]>([])
   const [contractsLoading, setContractsLoading] = useState(false)
-  const [viewingContractId, setViewingContractId] = useState<string | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showPDFViewer, setShowPDFViewer] = useState(false)
   const [selectedPDFUrl, setSelectedPDFUrl] = useState<string | null>(null)
   const [selectedPDFTitle, setSelectedPDFTitle] = useState<string>('')
@@ -146,15 +145,7 @@ export default function AdminStatsPage() {
   }
 
   const handleViewContract = (contractId: string) => {
-    setViewingContractId(contractId)
-    setIsSheetOpen(true)
-  }
-
-  const handleCloseView = () => {
-    setViewingContractId(null)
-    setIsSheetOpen(false)
-    fetchStats()
-    fetchContracts()
+    router.push(`/contracts/${contractId}`)
   }
 
   if (loading) {
@@ -180,7 +171,7 @@ export default function AdminStatsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <BarChart3 className="w-8 h-8 text-primary" />
@@ -417,35 +408,15 @@ export default function AdminStatsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center justify-end gap-2">
-                            <DropdownMenu
-                              trigger={
-                                <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors">
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
-                              }
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewContract(contract.id)
+                              }}
+                              className="font-bold text-primary-dark text-sm"
                             >
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleViewContract(contract.id)
-                                }}
-                                icon={<Eye className="w-4 h-4" />}
-                              >
-                                View Contract
-                              </DropdownMenuItem>
-                              {contract.pdfUrl && contract.status === 'COMPLETED' && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedPDFUrl(contract.pdfUrl!)
-                                    setSelectedPDFTitle(contract.title)
-                                    setShowPDFViewer(true)
-                                  }}
-                                  icon={<FileText className="w-4 h-4" />}
-                                >
-                                  View PDF Contract
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenu>
+                              View Details
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -501,14 +472,6 @@ export default function AdminStatsPage() {
           </div>
         </div>
       </div>
-
-      {/* Contract View Sheet */}
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseView}
-        contractId={viewingContractId}
-        onUpdate={fetchContracts}
-      />
 
       {/* PDF Viewer Sheet */}
       {selectedPDFUrl && (

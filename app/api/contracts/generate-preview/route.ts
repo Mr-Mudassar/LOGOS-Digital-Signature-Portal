@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { contractTitle, htmlContent, category, createdAt } = body
+    const { contractId, content, title, category, createdAt } = body
 
-    if (!contractTitle || !htmlContent) {
+    if (!title || !content) {
       return NextResponse.json(
         { error: 'Contract title and content are required' },
         { status: 400 }
@@ -23,18 +23,18 @@ export async function POST(request: NextRequest) {
 
     // Generate PDF preview
     const pdfBuffer = await generateContractPDFWithRetry({
-      contractTitle,
-      htmlContent,
+      contractTitle: title,
+      htmlContent: content,
       category,
       createdAt: createdAt ? new Date(createdAt) : undefined,
     })
 
     // Return PDF as a blob
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${contractTitle
+        'Content-Disposition': `inline; filename="${title
           .replace(/[^a-z0-9]/gi, '-')
           .toLowerCase()}.pdf"`,
       },

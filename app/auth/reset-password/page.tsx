@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import axios from 'axios'
-import { Lock, CheckCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react'
+import { Lock, CheckCircle, AlertTriangle, Eye, EyeOff, Shield } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -43,8 +43,8 @@ function ResetPasswordForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [validating, setValidating] = useState(true)
-  const [tokenValid, setTokenValid] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [tokenValid, setTokenValid] = useState(true)
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -57,26 +57,9 @@ function ResetPasswordForm() {
   useEffect(() => {
     if (!token) {
       setError('Invalid reset link')
-      setValidating(false)
-      return
-    }
-
-    // Validate token on mount
-    validateToken()
-  }, [token])
-
-  const validateToken = async () => {
-    try {
-      // We'll validate the token when the user submits
-      // For now, just check if token exists
-      setTokenValid(true)
-    } catch (err) {
-      setError('Invalid or expired reset link')
       setTokenValid(false)
-    } finally {
-      setValidating(false)
     }
-  }
+  }, [token])
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
     setError('')
@@ -104,18 +87,7 @@ function ResetPasswordForm() {
     }
   }
 
-  if (validating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Validating reset link...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!token || (!tokenValid && !validating)) {
+  if (!token || !tokenValid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 p-4">
         <div className="w-full max-w-md">

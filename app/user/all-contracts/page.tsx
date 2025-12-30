@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { Shield, FileText, Filter } from 'lucide-react'
 import axios from 'axios'
 import ContractCard from '@/components/dashboard/ContractCard'
-import ContractViewSheet from '@/components/ContractViewSheet'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -18,8 +17,6 @@ export default function DashboardPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
 
   const isAdmin = session?.user?.role === 'ADMIN'
 
@@ -51,13 +48,7 @@ export default function DashboardPage() {
   }, [status, fetchContracts])
 
   const handleOpenContract = (contractId: string) => {
-    setSelectedContractId(contractId)
-    setIsSheetOpen(true)
-  }
-
-  const handleCloseSheet = () => {
-    setIsSheetOpen(false)
-    setSelectedContractId(null)
+    router.push(`/contracts/${contractId}`)
   }
 
   // Reset to page 1 when filter or itemsPerPage changes
@@ -223,14 +214,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Contract View Sheet */}
-      <ContractViewSheet
-        isOpen={isSheetOpen}
-        onClose={handleCloseSheet}
-        contractId={selectedContractId}
-        onUpdate={fetchContracts}
-      />
     </div>
   )
 }

@@ -94,6 +94,11 @@ Generate a complete, legally-sound contract that:
 2. Has clear sections for terms and conditions
 3. Follows standard contract formatting
 4. Is professional and comprehensive
+5. IMPORTANT: Start with ONLY the contract title "${
+        contract.title
+      }" as a CENTERED H1 heading - DO NOT add "CONTRACT" or "Contract Title:" before it
+6. Do NOT include generic headings like "CONTRACT" at the top
+7. Use <h1 style="text-align: center;">${contract.title}</h1> for the title
 
 CRITICAL - SIGNATURE SECTION:
 You MUST end the contract with this EXACT signature section (copy it exactly as shown):
@@ -118,7 +123,8 @@ IMPORTANT:
 - Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
 - Use headings for sections, paragraphs for content, and lists where appropriate
 - Do NOT include DOCTYPE, html, head, or body tags - only the content HTML
-- The signature section placeholders ({{INITIATOR_NAME}}, etc.) will be replaced when parties sign`
+- Return ONLY the raw HTML content, nothing else
+- The signature section placeholders will be replaced when parties sign`
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -145,6 +151,21 @@ IMPORTANT:
           { status: 500 }
         )
       }
+
+      // Clean up markdown code blocks if present
+      if (aiGeneratedContent.startsWith('```')) {
+        // Remove opening code block marker (e.g., ```html or ```)
+        const firstNewline = aiGeneratedContent.indexOf('\n')
+        if (firstNewline !== -1) {
+          aiGeneratedContent = aiGeneratedContent.substring(firstNewline + 1)
+        }
+      }
+      if (aiGeneratedContent.endsWith('```')) {
+        // Remove closing code block marker
+        aiGeneratedContent = aiGeneratedContent.substring(0, aiGeneratedContent.lastIndexOf('```'))
+      }
+      // Trim any extra whitespace
+      aiGeneratedContent = aiGeneratedContent.trim()
     } catch (openaiError: any) {
       console.error('OpenAI API error:', openaiError)
 

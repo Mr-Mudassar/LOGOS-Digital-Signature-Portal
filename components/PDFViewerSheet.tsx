@@ -92,6 +92,7 @@ export default function PDFViewerSheet({
         URL.revokeObjectURL(previewUrl)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, pdfUrl, contractId, contractTitle, contractContent, category, createdAt])
 
   return (

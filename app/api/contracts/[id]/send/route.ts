@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       receiverName: contract.receiverName,
       initiatorName: contract.initiatorName,
       contractTitle: contract.title,
-      signingLink: contract.signingLink || '',
+      contractId: contract.id,
     })
 
     return NextResponse.json(
