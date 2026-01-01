@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
 import Link from 'next/link'
-import { Shield } from 'lucide-react'
+import { useEffect } from 'react'
 
 export default function Error({
   error,

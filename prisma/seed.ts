@@ -11,7 +11,7 @@ async function main() {
   await prisma.signature.deleteMany()
   await prisma.contract.deleteMany()
   await prisma.user.deleteMany()
-  console.log('✓ Database cleaned')
+  console.log('Database cleaned')
 
   // Create admin user
   const hashedPassword = await bcrypt.hash('Password@123', 10)
@@ -25,15 +25,8 @@ async function main() {
     },
   })
 
-  console.log('✓ Created admin user')
-
-  console.log('🎉 Database seeded successfully!')
-  console.log('\n' + '='.repeat(50))
-  console.log('ADMIN ACCOUNT:')
-  console.log('Email: admin1@yopmail.com')
-  console.log('Password: Password@123')
-  console.log('Role: ADMIN')
-  console.log('='.repeat(50))
+  console.log('Created admin user')
+  console.log('Database seeded successfully!')
 }
 
 main()
