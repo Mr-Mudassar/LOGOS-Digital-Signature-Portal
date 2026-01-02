@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
-import mammoth from 'mammoth'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -37,41 +36,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contract not found or unauthorized' }, { status: 404 })
     }
 
-    // Extract text from reference document if provided (DOCX only)
-    let documentText = ''
+    // Validate and upload file if provided
+    let uploadedFileId: string | null = null
     if (referenceDocument) {
-      // Validate file type - only accept DOCX
-      if (!referenceDocument.name.toLowerCase().endsWith('.docx')) {
+      const fileName = referenceDocument.name.toLowerCase()
+      const isDocx = fileName.endsWith('.docx')
+      const isPdf = fileName.endsWith('.pdf')
+
+      // Validate file type - only accept DOCX or PDF
+      if (!isDocx && !isPdf) {
         return NextResponse.json(
-          { error: 'Only DOCX files are supported for reference documents' },
+          { error: 'Only DOCX and PDF files are supported for reference documents' },
           { status: 400 }
         )
+      }
+
+      // Check file size (10MB limit)
+      if (referenceDocument.size > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
       }
 
       try {
-        // Extract text from DOCX using mammoth
+        // Upload file directly to OpenAI
         const buffer = await referenceDocument.arrayBuffer()
-        const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) })
-        documentText = result.value
-
-        // Limit to reasonable context size (10000 chars)
-        if (documentText.length > 10000) {
-          documentText = documentText.substring(0, 10000)
-        }
-      } catch (error) {
-        console.error('Error extracting DOCX content:', error)
-        return NextResponse.json(
-          { error: 'Failed to extract text from DOCX file. Please ensure the file is valid.' },
-          { status: 400 }
-        )
+        const file = await openai.files.create({
+          file: new File([buffer], referenceDocument.name, { type: referenceDocument.type }),
+          purpose: 'assistants',
+        })
+        uploadedFileId = file.id
+        console.log('File uploaded to OpenAI:', uploadedFileId)
+      } catch (uploadError) {
+        console.error('File upload error:', uploadError)
+        return NextResponse.json({ error: 'Failed to upload file to OpenAI' }, { status: 500 })
       }
     }
 
-    // Generate contract using OpenAI
+    // Generate contract using OpenAI Assistants API
     let aiGeneratedContent: string | null = null
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === '') {
+      // Clean up uploaded file if exists
+      if (uploadedFileId) {
+        try {
+          await openai.files.delete(uploadedFileId)
+        } catch (e) {
+          console.error('Failed to delete file:', e)
+        }
+      }
       return NextResponse.json(
         { error: 'OpenAI API key is not configured. Please contact the administrator.' },
         { status: 500 }
@@ -85,7 +97,7 @@ export async function POST(request: NextRequest) {
         day: 'numeric',
       })
 
-      const prompt = `You are a legal document generator for Lagos State, Nigeria. Generate a professional legal contract based on the following information:
+      const instructionPrompt = `You are a legal document generator for Lagos State, Nigeria. Generate a professional legal contract based on the following information:
 
 Contract Title: ${contract.title}
 First Party (Initiator): ${initiatorName}
@@ -94,7 +106,11 @@ Current Date: ${currentDate}
 
 ${userContext ? `Additional Context: ${userContext}` : ''}
 
-${documentText ? `Reference Document Content:\n${documentText}` : ''}
+${
+  uploadedFileId
+    ? 'IMPORTANT: A reference document has been provided as an attachment. Please carefully review and analyze this document, and incorporate all relevant information, terms, clauses, and context from it into the contract. Use the document content as a primary source of information for generating the contract.'
+    : ''
+}
 
 Generate a complete, legally-sound contract that:
 1. Includes proper legal language appropriate for Lagos State, Nigeria
@@ -131,14 +147,14 @@ You MUST end the contract with this EXACT signature section (copy it exactly as 
 
 ⚠️ ABSOLUTELY CRITICAL - DO NOT FILL SIGNATURE PLACEHOLDERS:
 - NEVER replace {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, or {{RECEIVER_DATE}} with actual values
-- Even if names or dates are mentioned in the additional context, DO NOT use them in the signature section
+- Even if names or dates are mentioned in the additional context or reference document, DO NOT use them in the signature section
 - The signature section must ALWAYS contain the exact placeholders shown above
 - These placeholders will be automatically filled when each party digitally signs the contract
 - Signatures are captured at signing time, NOT at generation time
 
 IMPORTANT: 
 - You can use the party names (${initiatorName} and ${receiverName}) in the main contract body/clauses where needed
-- If the user context requests including the current date (e.g., "mention today's date"), use the current date (${currentDate}) in the contract body/content where appropriate
+- If the user context or reference document requests including the current date, use the current date (${currentDate}) in the contract body/content where appropriate
 - However, the SIGNATURES section at the end must ALWAYS use the exact placeholders {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, {{RECEIVER_DATE}}
 - The current date can appear in contract clauses, effective dates, or wherever contextually relevant, but NEVER in the signature date fields
 - Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
@@ -146,24 +162,92 @@ IMPORTANT:
 - Do NOT include DOCTYPE, html, head, or body tags - only the content HTML
 - Return ONLY the raw HTML content, nothing else`
 
-      const completion = await openai.chat.completions.create({
+      // Create an assistant
+      const assistant = await openai.beta.assistants.create({
+        name: 'Contract Generator',
+        instructions: instructionPrompt,
         model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an expert legal document generator specializing in Nigerian contract law. Generate professional, legally-sound contracts with proper HTML formatting.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 3000,
+        tools: uploadedFileId ? [{ type: 'file_search' }] : [],
       })
 
-      aiGeneratedContent = completion.choices[0].message.content
+      // Create a thread
+      const thread = await openai.beta.threads.create()
+      const threadId = thread.id
+      console.log('Thread created:', threadId)
+
+      // Create message with optional file attachment
+      const messageParams: any = {
+        role: 'user',
+        content: 'Please generate the contract as specified in your instructions.',
+      }
+
+      if (uploadedFileId) {
+        messageParams.attachments = [
+          {
+            file_id: uploadedFileId,
+            tools: [{ type: 'file_search' }],
+          },
+        ]
+      }
+
+      await openai.beta.threads.messages.create(threadId, messageParams)
+
+      // Run the assistant
+      const run = await openai.beta.threads.runs.create(threadId, {
+        assistant_id: assistant.id,
+      })
+      const runId = run.id
+      console.log('Run created:', runId, 'for thread:', threadId)
+
+      // Wait for completion (with timeout)
+      let runStatus = await openai.beta.threads.runs.retrieve(runId, { thread_id: threadId })
+      let attempts = 0
+      const maxAttempts = 60 // 60 seconds timeout
+
+      while (
+        runStatus.status !== 'completed' &&
+        runStatus.status !== 'failed' &&
+        attempts < maxAttempts
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        runStatus = await openai.beta.threads.runs.retrieve(runId, { thread_id: threadId })
+        attempts++
+      }
+
+      if (runStatus.status === 'failed') {
+        throw new Error('Assistant run failed')
+      }
+
+      if (attempts >= maxAttempts) {
+        throw new Error('Assistant run timed out')
+      }
+
+      // Retrieve the generated message
+      const messages = await openai.beta.threads.messages.list(threadId)
+      const assistantMessage = messages.data.find((msg) => msg.role === 'assistant')
+
+      if (!assistantMessage || !assistantMessage.content[0]) {
+        throw new Error('No response from assistant')
+      }
+
+      // Extract the text content
+      const content = assistantMessage.content[0]
+      if (content.type === 'text') {
+        aiGeneratedContent = content.text.value
+      } else {
+        throw new Error('Unexpected response type from assistant')
+      }
+
+      // Clean up resources
+      await openai.beta.assistants.delete(assistant.id)
+      await openai.beta.threads.delete(threadId)
+      if (uploadedFileId) {
+        try {
+          await openai.files.delete(uploadedFileId)
+        } catch (e) {
+          console.error('Failed to delete file:', e)
+        }
+      }
 
       if (!aiGeneratedContent) {
         return NextResponse.json(
@@ -174,22 +258,28 @@ IMPORTANT:
 
       // Clean up markdown code blocks if present
       if (aiGeneratedContent.startsWith('```')) {
-        // Remove opening code block marker (e.g., ```html or ```)
         const firstNewline = aiGeneratedContent.indexOf('\n')
         if (firstNewline !== -1) {
           aiGeneratedContent = aiGeneratedContent.substring(firstNewline + 1)
         }
       }
       if (aiGeneratedContent.endsWith('```')) {
-        // Remove closing code block marker
         aiGeneratedContent = aiGeneratedContent.substring(0, aiGeneratedContent.lastIndexOf('```'))
       }
-      // Trim any extra whitespace
       aiGeneratedContent = aiGeneratedContent.trim()
     } catch (openaiError: any) {
       console.error('OpenAI API error:', openaiError)
 
-      // Return specific error messages based on the error type
+      // Clean up uploaded file on error
+      if (uploadedFileId) {
+        try {
+          await openai.files.delete(uploadedFileId)
+        } catch (e) {
+          console.error('Failed to delete file:', e)
+        }
+      }
+
+      // Return specific error messages
       if (openaiError.status === 401) {
         return NextResponse.json(
           { error: 'Invalid OpenAI API key. Please contact the administrator.' },

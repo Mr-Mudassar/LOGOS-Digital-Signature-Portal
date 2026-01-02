@@ -83,9 +83,10 @@ export default function CreateContractPage() {
         fileName.endsWith('.docx') ||
         selectedFile.type ===
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const isPdf = fileName.endsWith('.pdf') || selectedFile.type === 'application/pdf'
 
-      if (!isDocx) {
-        setError('Only DOCX files are supported. Please upload a Word document (.docx)')
+      if (!isDocx && !isPdf) {
+        setError('Only DOCX and PDF files are supported. Please upload a valid document.')
         setFile(null)
         e.target.value = ''
         return
@@ -231,14 +232,14 @@ export default function CreateContractPage() {
                     <div className="text-center">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <span className="text-sm text-gray-600">
-                        {file ? file.name : 'Choose DOCX File (Optional)'}
+                        {file ? file.name : 'Choose DOCX or PDF File (Optional)'}
                       </span>
-                      <p className="text-xs text-gray-500 mt-1">Only DOCX files, up to 10MB</p>
+                      <p className="text-xs text-gray-500 mt-1">DOCX or PDF files, up to 10MB</p>
                     </div>
                     <input
                       type="file"
                       onChange={handleFileChange}
-                      accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
                       className="hidden"
                     />
                   </label>
