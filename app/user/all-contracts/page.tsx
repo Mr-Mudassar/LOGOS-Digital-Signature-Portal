@@ -76,7 +76,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <FileText className="w-8 h-8 text-primary" />
-            My Contracts
+            My Contracts ({totalCount})
           </h1>
           <p className="text-gray-600 mt-1">
             Manage your contracts, signatures, and pending documents.
