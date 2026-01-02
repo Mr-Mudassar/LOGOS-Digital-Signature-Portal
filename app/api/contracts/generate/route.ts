@@ -79,11 +79,18 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+
       const prompt = `You are a legal document generator for Lagos State, Nigeria. Generate a professional legal contract based on the following information:
 
 Contract Title: ${contract.title}
 First Party (Initiator): ${initiatorName}
 Second Party (Receiver): ${receiverName}
+Current Date: ${currentDate}
 
 ${userContext ? `Additional Context: ${userContext}` : ''}
 
@@ -122,12 +129,22 @@ You MUST end the contract with this EXACT signature section (copy it exactly as 
   </tr>
 </table>
 
+⚠️ ABSOLUTELY CRITICAL - DO NOT FILL SIGNATURE PLACEHOLDERS:
+- NEVER replace {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, or {{RECEIVER_DATE}} with actual values
+- Even if names or dates are mentioned in the additional context, DO NOT use them in the signature section
+- The signature section must ALWAYS contain the exact placeholders shown above
+- These placeholders will be automatically filled when each party digitally signs the contract
+- Signatures are captured at signing time, NOT at generation time
+
 IMPORTANT: 
+- You can use the party names (${initiatorName} and ${receiverName}) in the main contract body/clauses where needed
+- If the user context requests including the current date (e.g., "mention today's date"), use the current date (${currentDate}) in the contract body/content where appropriate
+- However, the SIGNATURES section at the end must ALWAYS use the exact placeholders {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, {{RECEIVER_DATE}}
+- The current date can appear in contract clauses, effective dates, or wherever contextually relevant, but NEVER in the signature date fields
 - Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
 - Use headings for sections, paragraphs for content, and lists where appropriate
 - Do NOT include DOCTYPE, html, head, or body tags - only the content HTML
-- Return ONLY the raw HTML content, nothing else
-- The signature section placeholders will be replaced when parties sign`
+- Return ONLY the raw HTML content, nothing else`
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
