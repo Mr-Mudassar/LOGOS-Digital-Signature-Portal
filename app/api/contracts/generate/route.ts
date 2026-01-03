@@ -135,13 +135,13 @@ You MUST end the contract with this EXACT signature section (copy it exactly as 
     <td style="width: 50%; vertical-align: top; padding-right: 20px;">
       <p style="margin-bottom: 15px;"><strong>FIRST PARTY (INITIATOR)</strong></p>
       <p style="margin-bottom: 8px;">Name: {{INITIATOR_NAME}}</p>
-      <p style="margin-bottom: 8px;">LASRRA Number: {{INITIATOR_LASRRA}}</p>
+      <p style="margin-bottom: 8px; white-space: nowrap;">LASRRA Number: {{INITIATOR_LASRRA}}</p>
       <p>Date: {{INITIATOR_DATE}}</p>
     </td>
     <td style="width: 50%; vertical-align: top; padding-left: 20px;">
       <p style="margin-bottom: 15px;"><strong>SECOND PARTY (RECEIVER)</strong></p>
       <p style="margin-bottom: 8px;">Name: {{RECEIVER_NAME}}</p>
-      <p style="margin-bottom: 8px;">LASRRA Number: {{RECEIVER_LASRRA}}</p>
+      <p style="margin-bottom: 8px; white-space: nowrap;">LASRRA Number: {{RECEIVER_LASRRA}}</p>
       <p>Date: {{RECEIVER_DATE}}</p>
     </td>
   </tr>
