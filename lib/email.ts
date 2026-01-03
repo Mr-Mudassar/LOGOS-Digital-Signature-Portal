@@ -1,6 +1,18 @@
-import sgMail from '@sendgrid/mail'
+import * as nodemailer from 'nodemailer'
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '')
+// Create SMTP transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: parseInt(process.env.SMTP_PORT || '587') === 465, // true for port 465
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: true,
+  },
+})
 
 interface SendContractInvitationParams {
   receiverEmail: string
@@ -118,7 +130,17 @@ export async function sendContractInvitation(params: SendContractInvitationParam
     `,
   }
 
-  await sgMail.send(msg)
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: receiverEmail,
+      subject: `Contract Ready for Signature: ${contractTitle}`,
+      html: msg.html,
+    })
+  } catch (err) {
+    console.error('SMTP ERROR:', err)
+    throw new Error('Email send failed')
+  }
 }
 
 /**
@@ -227,19 +249,24 @@ export async function sendContractCompletion(params: SendContractCompletionParam
     </html>
   `
 
-  // Send to initiator
-  await sgMail.send({
-    to: initiatorEmail,
-    from: process.env.SENDGRID_FROM_EMAIL || '',
-    subject: `Contract Completed: ${contractTitle}`,
-    html: emailTemplate(initiatorName, receiverName),
-  })
+  try {
+    // Send to initiator
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: initiatorEmail,
+      subject: `Contract Completed: ${contractTitle}`,
+      html: emailTemplate(initiatorName, receiverName),
+    })
 
-  // Send to receiver
-  await sgMail.send({
-    to: receiverEmail,
-    from: process.env.SENDGRID_FROM_EMAIL || '',
-    subject: `Contract Completed: ${contractTitle}`,
-    html: emailTemplate(receiverName, initiatorName),
-  })
+    // Send to receiver
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: receiverEmail,
+      subject: `Contract Completed: ${contractTitle}`,
+      html: emailTemplate(receiverName, initiatorName),
+    })
+  } catch (err) {
+    console.error('SMTP ERROR:', err)
+    throw new Error('Email send failed')
+  }
 }

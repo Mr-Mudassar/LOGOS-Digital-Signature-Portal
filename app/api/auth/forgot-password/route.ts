@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import sgMail from '@sendgrid/mail'
+import * as nodemailer from 'nodemailer'
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '')
+// Create SMTP transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: parseInt(process.env.SMTP_PORT || '587') === 465,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: true,
+  },
+})
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -150,7 +162,17 @@ export async function POST(request: NextRequest) {
       `,
     }
 
-    await sgMail.send(msg)
+    try {
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject: 'Password Reset Request - MOWU Digital Signature',
+        html: msg.html,
+      })
+    } catch (err) {
+      console.error('SMTP ERROR:', err)
+      throw new Error('Email send failed')
+    }
 
     return NextResponse.json(
       { message: 'If an account exists, a password reset link has been sent' },

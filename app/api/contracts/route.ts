@@ -4,9 +4,6 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
-import sgMail from '@sendgrid/mail'
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '')
 
 const createContractSchema = z.object({
   title: z.string().min(1, 'Title is required'),
