@@ -135,18 +135,20 @@ You MUST end the contract with this EXACT signature section (copy it exactly as 
     <td style="width: 50%; vertical-align: top; padding-right: 20px;">
       <p style="margin-bottom: 15px;"><strong>FIRST PARTY (INITIATOR)</strong></p>
       <p style="margin-bottom: 8px;">Name: {{INITIATOR_NAME}}</p>
+      <p style="margin-bottom: 8px;">LASRRA Number: {{INITIATOR_LASRRA}}</p>
       <p>Date: {{INITIATOR_DATE}}</p>
     </td>
     <td style="width: 50%; vertical-align: top; padding-left: 20px;">
       <p style="margin-bottom: 15px;"><strong>SECOND PARTY (RECEIVER)</strong></p>
       <p style="margin-bottom: 8px;">Name: {{RECEIVER_NAME}}</p>
+      <p style="margin-bottom: 8px;">LASRRA Number: {{RECEIVER_LASRRA}}</p>
       <p>Date: {{RECEIVER_DATE}}</p>
     </td>
   </tr>
 </table>
 
 ⚠️ ABSOLUTELY CRITICAL - DO NOT FILL SIGNATURE PLACEHOLDERS:
-- NEVER replace {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, or {{RECEIVER_DATE}} with actual values
+- NEVER replace {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_LASRRA}}, {{RECEIVER_LASRRA}}, {{INITIATOR_DATE}}, or {{RECEIVER_DATE}} with actual values
 - Even if names or dates are mentioned in the additional context or reference document, DO NOT use them in the signature section
 - The signature section must ALWAYS contain the exact placeholders shown above
 - These placeholders will be automatically filled when each party digitally signs the contract
@@ -155,7 +157,7 @@ You MUST end the contract with this EXACT signature section (copy it exactly as 
 IMPORTANT: 
 - You can use the party names (${initiatorName} and ${receiverName}) in the main contract body/clauses where needed
 - If the user context or reference document requests including the current date, use the current date (${currentDate}) in the contract body/content where appropriate
-- However, the SIGNATURES section at the end must ALWAYS use the exact placeholders {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_DATE}}, {{RECEIVER_DATE}}
+- However, the SIGNATURES section at the end must ALWAYS use the exact placeholders {{INITIATOR_NAME}}, {{RECEIVER_NAME}}, {{INITIATOR_LASRRA}}, {{RECEIVER_LASRRA}}, {{INITIATOR_DATE}}, {{RECEIVER_DATE}}
 - The current date can appear in contract clauses, effective dates, or wherever contextually relevant, but NEVER in the signature date fields
 - Format the contract in clean HTML with proper semantic tags (h1, h2, h3, p, ul, li, strong, em)
 - Use headings for sections, paragraphs for content, and lists where appropriate

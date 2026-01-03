@@ -42,10 +42,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (signerType === 'receiver') {
-      // Get current user's email
+      // Get current user's email and LASRRA number
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { email: true },
+        select: { email: true, lasrraNumber: true },
       })
 
       // Check if user is the receiver (by ID or email)
@@ -56,11 +56,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
       }
 
-      // Update contract with receiverId if not set
+      // Update contract with receiverId and receiverLasrraNumber if not set
       if (!contract.receiverId) {
         await prisma.contract.update({
           where: { id },
-          data: { receiverId: session.user.id },
+          data: {
+            receiverId: session.user.id,
+            receiverLasrraNumber: user?.lasrraNumber,
+          },
         })
       }
     }
@@ -94,15 +97,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const signatureData = `${signerName} - ${formattedDateTime}`
 
+    // Get current user's LASRRA number for signature
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { lasrraNumber: true },
+    })
+
     // Replace placeholders in contract content with bold text
     let updatedContent = contract.aiGeneratedContent || ''
     if (signerType === 'initiator') {
       updatedContent = updatedContent
         .replace(/\{\{INITIATOR_NAME\}\}/g, `<strong>${signerName}</strong>`)
+        .replace(
+          /\{\{INITIATOR_LASRRA\}\}/g,
+          `<strong>${currentUser?.lasrraNumber || 'N/A'}</strong>`
+        )
         .replace(/\{\{INITIATOR_DATE\}\}/g, `<strong>${formattedDateTime}</strong>`)
     } else {
       updatedContent = updatedContent
         .replace(/\{\{RECEIVER_NAME\}\}/g, `<strong>${signerName}</strong>`)
+        .replace(
+          /\{\{RECEIVER_LASRRA\}\}/g,
+          `<strong>${currentUser?.lasrraNumber || 'N/A'}</strong>`
+        )
         .replace(/\{\{RECEIVER_DATE\}\}/g, `<strong>${formattedDateTime}</strong>`)
     }
 

@@ -30,6 +30,8 @@ const contractSchema = z
       .max(60, 'Title must not exceed 60 characters'),
     initiatorName: z.string().min(2, 'Name must be at least 2 characters'),
     initiatorEmail: z.string().email('Invalid email address'),
+    initiatorLasrraNumber: z.string().optional(),
+    receiverName: z.string().min(2, 'Name must be at least 2 characters'),
     receiverEmail: z.string().email('Invalid email address'),
     userContext: z.string().max(500, 'Context must not exceed 500 characters').optional(),
     category: z.string().min(1, 'Please select a category'),
@@ -61,16 +63,21 @@ export default function CreateContractPage() {
       title: '',
       initiatorName: '',
       initiatorEmail: '',
+      initiatorLasrraNumber: '',
+      receiverName: '',
       receiverEmail: '',
       userContext: '',
       category: 'OTHER',
     },
   })
 
-  // Autofill initiator email with session user's email
+  // Autofill initiator email and LASRRA Number with session user's data
   useEffect(() => {
     if (session?.user?.email) {
       form.setValue('initiatorEmail', session.user.email)
+    }
+    if (session?.user?.lasrraNumber) {
+      form.setValue('initiatorLasrraNumber', session.user.lasrraNumber)
     }
   }, [session, form])
 
@@ -108,12 +115,13 @@ export default function CreateContractPage() {
     setError('')
 
     try {
-      // Create contract without receiverName
+      // Create contract with receiverName
       const contractResponse = await axios.post('/api/contracts', {
         title: data.title,
         initiatorName: data.initiatorName,
         initiatorEmail: data.initiatorEmail,
-        receiverName: '', // Will be filled when receiver signs up
+        initiatorLasrraNumber: data.initiatorLasrraNumber,
+        receiverName: data.receiverName,
         receiverEmail: data.receiverEmail,
         userContext: data.userContext,
         category: data.category,
@@ -129,7 +137,7 @@ export default function CreateContractPage() {
       formDataObj.append('contractId', contractId)
       formDataObj.append('userContext', data.userContext || '')
       formDataObj.append('initiatorName', data.initiatorName)
-      formDataObj.append('receiverName', 'Second Party') // Placeholder
+      formDataObj.append('receiverName', data.receiverName)
       if (file) {
         formDataObj.append('referenceDocument', file)
       }
@@ -265,6 +273,27 @@ export default function CreateContractPage() {
                   />
                   <FormField
                     control={form.control}
+                    name="initiatorLasrraNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LASRRA Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="LASRRA-123456"
+                            {...field}
+                            disabled
+                            className="bg-gray-50 cursor-not-allowed"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Your registered LASRRA Number
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="initiatorEmail"
                     render={({ field }) => (
                       <FormItem>
@@ -288,26 +317,41 @@ export default function CreateContractPage() {
                 </div>
               </div>
 
-              {/* Second Party - Email Only */}
+              {/* Second Party */}
               <div>
                 <FormLabel className="text-base font-semibold">Second Party</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="receiverEmail"
-                  render={({ field }) => (
-                    <FormItem className="mt-3">
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="jane@example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        The second party&apos;s name will be captured when they sign up to sign the
-                        contract
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <FormField
+                    control={form.control}
+                    name="receiverName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Jane Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="receiverEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="jane@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormDescription className="text-xs mt-2">
+                  The second party&apos;s LASRRA Number will be captured when they sign up to sign
+                  the contract
+                </FormDescription>
               </div>
 
               {/* Additional Context */}

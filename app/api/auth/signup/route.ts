@@ -7,12 +7,20 @@ const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().optional(),
+  lasrraNumber: z
+    .string()
+    .min(10, 'LASRRA Number must be at least 10 characters')
+    .max(20, 'LASRRA Number must not exceed 20 characters')
+    .regex(
+      /^[A-Z0-9-]+$/,
+      'LASRRA Number must contain only uppercase letters, numbers, and hyphens'
+    ),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name } = signupSchema.parse(body)
+    const { email, password, name, lasrraNumber } = signupSchema.parse(body)
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -21,6 +29,18 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
+    }
+
+    // Check if LASRRA Number already exists
+    const existingLasrra = await prisma.user.findUnique({
+      where: { lasrraNumber },
+    })
+
+    if (existingLasrra) {
+      return NextResponse.json(
+        { error: 'User with this LASRRA Number already exists' },
+        { status: 400 }
+      )
     }
 
     // Hash password
@@ -32,11 +52,13 @@ export async function POST(request: NextRequest) {
         email,
         password: hashedPassword,
         name,
+        lasrraNumber,
       },
       select: {
         id: true,
         email: true,
         name: true,
+        lasrraNumber: true,
         createdAt: true,
       },
     })

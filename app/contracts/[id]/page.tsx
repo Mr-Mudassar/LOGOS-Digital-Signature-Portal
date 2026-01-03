@@ -166,8 +166,10 @@ export default function ContractDetailsPage() {
       let previewContent = contract.aiGeneratedContent || ''
       previewContent = previewContent
         .replace(/{{INITIATOR_NAME}}/g, '_______________________')
+        .replace(/{{INITIATOR_LASRRA}}/g, '_______________________')
         .replace(/{{INITIATOR_DATE}}/g, '_______________________')
         .replace(/{{RECEIVER_NAME}}/g, '_______________________')
+        .replace(/{{RECEIVER_LASRRA}}/g, '_______________________')
         .replace(/{{RECEIVER_DATE}}/g, '_______________________')
 
       // Generate PDF preview

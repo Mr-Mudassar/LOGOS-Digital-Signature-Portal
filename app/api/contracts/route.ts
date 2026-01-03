@@ -12,8 +12,10 @@ const createContractSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   initiatorName: z.string().min(1, 'Initiator name is required'),
   initiatorEmail: z.string().email().optional(),
-  receiverName: z.string().optional(), // Made optional - will be captured when receiver signs up
+  initiatorLasrraNumber: z.string().optional(),
+  receiverName: z.string().min(2, 'Receiver name must be at least 2 characters'),
   receiverEmail: z.string().email('Valid receiver email is required'),
+  receiverLasrraNumber: z.string().optional(),
   userContext: z.string().optional(),
   category: z
     .enum(['HOUSING', 'LAND', 'CIVIL_SERVICE_COMMISSION', 'MINISTRY_OF_JUSTICE', 'OTHER'])
@@ -131,8 +133,10 @@ export async function POST(request: NextRequest) {
         initiatorId: session.user.id,
         initiatorName: data.initiatorName,
         initiatorEmail: data.initiatorEmail || session.user.email,
+        initiatorLasrraNumber: data.initiatorLasrraNumber,
         receiverName: data.receiverName || 'To be determined',
         receiverEmail: data.receiverEmail,
+        receiverLasrraNumber: data.receiverLasrraNumber,
         userContext: data.userContext,
         category: data.category || 'OTHER',
         referenceDocumentUrl: data.referenceDocumentUrl,

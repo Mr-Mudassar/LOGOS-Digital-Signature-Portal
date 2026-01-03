@@ -18,6 +18,7 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
+  lasrraNumber  String?   @unique
   password      String
   role          UserRole  @default(USER)
   emailVerified DateTime?
@@ -62,15 +63,17 @@ model Contract {
   pdfUrl                String? // S3 URL for generated PDF
 
   // Parties
-  initiatorId    String
-  initiator      User    @relation("ContractInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
-  initiatorName  String
-  initiatorEmail String?
+  initiatorId           String
+  initiator             User    @relation("ContractInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  initiatorName         String
+  initiatorEmail        String?
+  initiatorLasrraNumber String?
 
-  receiverId    String?
-  receiver      User?   @relation("ContractReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
-  receiverName  String
-  receiverEmail String
+  receiverId           String?
+  receiver             User?   @relation("ContractReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  receiverName         String
+  receiverEmail        String
+  receiverLasrraNumber String?
 
   // Signing
   signingLink          String?   @unique

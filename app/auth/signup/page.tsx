@@ -1,17 +1,17 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react'
-import axios from 'axios'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import axios from 'axios'
+import Link from 'next/link'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import Image from 'next/image'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff, Mail, Lock, User, UserPlus, CreditCard } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -24,6 +24,14 @@ import {
 const signUpSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
+    lasrraNumber: z
+      .string()
+      .min(10, 'LASRRA Number must be at least 10 characters')
+      .max(20, 'LASRRA Number must not exceed 20 characters')
+      .regex(
+        /^[A-Z0-9-]+$/,
+        'LASRRA Number must contain only uppercase letters, numbers, and hyphens'
+      ),
     email: z.string().email('Please enter a valid email address'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
@@ -45,6 +53,7 @@ export default function SignUpPage() {
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       name: '',
+      lasrraNumber: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -59,6 +68,7 @@ export default function SignUpPage() {
         email: data.email,
         password: data.password,
         name: data.name,
+        lasrraNumber: data.lasrraNumber,
       })
 
       toast.success('Account created successfully! Please sign in.')
@@ -113,6 +123,29 @@ export default function SignUpPage() {
                           type="text"
                           placeholder="Enter your full name"
                           className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lasrraNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LASRRA Number</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Enter your LASRRA Number"
+                          className="pl-10"
+                          maxLength={20}
                           {...field}
                         />
                       </div>
