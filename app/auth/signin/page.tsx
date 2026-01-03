@@ -24,9 +24,14 @@ import {
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  loginAsAdmin: z.boolean(),
 })
 
-type SignInFormValues = z.infer<typeof signInSchema>
+type SignInFormValues = {
+  email: string
+  password: string
+  loginAsAdmin: boolean
+}
 
 export default function SignInPage() {
   const router = useRouter()
@@ -41,6 +46,7 @@ export default function SignInPage() {
     defaultValues: {
       email: '',
       password: '',
+      loginAsAdmin: false,
     },
   })
 
@@ -64,12 +70,13 @@ export default function SignInPage() {
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,
+        loginAsAdmin: data.loginAsAdmin.toString(),
         redirect: false,
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
-        toast.error('Invalid email or password')
+        setError(result.error)
+        toast.error(result.error)
       } else {
         toast.success('Successfully signed in!')
         // Redirect to callbackUrl if provided, otherwise let useEffect handle it
@@ -170,6 +177,29 @@ export default function SignInPage() {
                       </div>
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="loginAsAdmin"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      />
+                    </FormControl>
+                    <FormLabel
+                      className="text-sm font-normal cursor-pointer"
+                      onClick={() => field.onChange(!field.value)}
+                    >
+                      Login as Admin
+                    </FormLabel>
                   </FormItem>
                 )}
               />
