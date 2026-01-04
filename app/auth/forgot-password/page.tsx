@@ -100,18 +100,20 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <Image
-            src="/lagos2.jpg"
-            alt="Lagos State"
-            width={80}
-            height={80}
-            className="rounded-lg"
-          />
-          <div>
-            <h1 className="font-bold text-gray-900 text-xl">Lagos State Digital</h1>
-            <p className="text-sm text-gray-600">Signature Portal</p>
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center mb-4">
+            <Image
+              src="/lagos2.jpg"
+              alt="Lagos State"
+              width={80}
+              height={80}
+              className="rounded-lg"
+            />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900">Lagos State Digital Signature Portal</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            Trusted contracts • Secure identity • Legally binding signatures
+          </p>
         </div>
 
         {/* Form Card */}

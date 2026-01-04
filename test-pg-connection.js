@@ -1,8 +1,8 @@
+require('dotenv').config()
 const { Pool } = require('pg')
 
 const pool = new Pool({
-  connectionString:
-    'postgresql://postgres:MOWU_RDS_DATABASE@database-1.cvq4iy62m8vx.eu-north-1.rds.amazonaws.com:5432/postgres',
+  connectionString: process.env.DATABASE_URL,
   connectionTimeoutMillis: 10000,
   ssl: {
     rejectUnauthorized: false,
