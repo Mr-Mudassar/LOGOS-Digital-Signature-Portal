@@ -1,18 +1,28 @@
 import * as nodemailer from 'nodemailer'
 
-// Create SMTP transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: parseInt(process.env.SMTP_PORT || '587') === 465, // true for port 465
-  auth: {
+// Create transporter function to ensure fresh config
+function createTransporter() {
+  console.log('Creating SMTP transporter with config:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: true,
-  },
-})
+    from: process.env.SMTP_FROM,
+    passLength: process.env.SMTP_PASS?.length,
+  })
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: parseInt(process.env.SMTP_PORT || '587') === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  })
+}
 
 interface SendContractInvitationParams {
   receiverEmail: string
@@ -129,6 +139,8 @@ export async function sendContractInvitation(params: SendContractInvitationParam
       </html>
     `,
   }
+
+  const transporter = createTransporter()
 
   try {
     await transporter.sendMail({
@@ -248,6 +260,8 @@ export async function sendContractCompletion(params: SendContractCompletionParam
     </body>
     </html>
   `
+
+  const transporter = createTransporter()
 
   try {
     // Send to initiator

@@ -4,19 +4,29 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import * as nodemailer from 'nodemailer'
 
-// Create SMTP transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: parseInt(process.env.SMTP_PORT || '587') === 465,
-  auth: {
+// Create transporter function
+function createTransporter() {
+  console.log('Creating SMTP transporter in forgot-password with config:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: true,
-  },
-})
+    from: process.env.SMTP_FROM,
+    passLength: process.env.SMTP_PASS?.length,
+  })
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: parseInt(process.env.SMTP_PORT || '587') === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  })
+}
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -162,13 +172,19 @@ export async function POST(request: NextRequest) {
       `,
     }
 
+    const transporter = createTransporter()
+
     try {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: email,
         subject: 'Password Reset Request - MOWU Digital Signature',
         html: msg.html,
       })
+      console.log('✅ Email sent successfully!')
+      console.log('Message ID:', info.messageId)
+      console.log('Response:', info.response)
+      console.log('Recipient:', email)
     } catch (err) {
       console.error('SMTP ERROR:', err)
       throw new Error('Email send failed')
