@@ -1,160 +1,233 @@
-# Lagos State Digital Signature Portal - MVP
+# 🏛 LSDS Portal — Lagos State Digital Signature System
 
-A full-stack Next.js application for document automation and digital signature management.
+> Full-stack **digital contract management and signature platform** built for the Lagos State (Nigeria) market. End-to-end contract lifecycle with AI-assisted generation, secure multi-party signing, and full audit trails. Built end-to-end as the sole developer.
 
-## 📚 Documentation Quick Links
+[![Status](https://img.shields.io/badge/Status-Pre--Launch%20Pilot-yellow?style=flat-square)]()
+[![Live Demo](https://img.shields.io/badge/Demo-lsds--portal--system.vercel.app-success?style=flat-square)](https://lsds-portal-system.vercel.app/)
+[![Stack](https://img.shields.io/badge/Stack-Next.js%20Full--Stack-black?style=flat-square)]()
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20Prisma-336791?style=flat-square)]()
+[![Cloud](https://img.shields.io/badge/Cloud-AWS%20S3%20%2B%20RDS%20%2B%20EC2-FF9900?style=flat-square)]()
 
-- 🚀 **[QUICKSTART.md](./QUICKSTART.md)** - Get running in 5 minutes
-- 📖 **[INDEX.md](./INDEX.md)** - Navigate all documentation
-- ⚡ **[CHEATSHEET.md](./CHEATSHEET.md)** - Quick command reference
-- 📋 **[COMPLETE.md](./COMPLETE.md)** - Project completion summary
+<!-- ADD SCREENSHOT HERE — drag a screenshot of the dashboard or signing flow here -->
 
-**New here?** Start with [QUICKSTART.md](./QUICKSTART.md) →
+---
 
-## Features
+## 🎯 What It Is
 
-- 🔐 **Authentication**: Email/password signup and signin with NextAuth.js
-- 📝 **Contract Management**: Create, view, and manage contracts
-- ✍️ **Digital Signatures**: Sign and send contracts for signature
-- 📧 **Email Notifications**: Automated emails via SendGrid
-- 🤖 **AI Integration**: Contract generation using OpenAI (ready to integrate)
-- 💾 **Database**: PostgreSQL with Prisma ORM (Supabase ready)
+LSDS Portal digitizes contract management for government and enterprise users — handling high-stakes, legally-binding documents with the security, audit trail, and compliance features required for institutional use.
 
-## Tech Stack
+Built as a **Next.js full-stack application** with a single deployment surface, shared TypeScript types between client and server, and Prisma as the data layer over PostgreSQL.
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: NextAuth.js
-- **Email**: SendGrid
-- **AI**: OpenAI API (ready to integrate)
-- **Deployment**: Vercel
+---
 
-## Getting Started
+## 🏗 My Role
 
-### Prerequisites
+I built this platform end-to-end as the sole developer:
 
-- Node.js 18+
-- PostgreSQL database (Supabase recommended)
-- SendGrid account
-- OpenAI API key
+### Frontend (Next.js App Router + TypeScript)
+- Designed and built the complete UI for contract management, signing workflows, and admin dashboard
+- Implemented real-time collaborative contract editor with conflict handling
+- Built signature capture component with drawing canvas and validation
+- RBAC-aware UI with conditional rendering based on user permissions
+- AI-assisted contract generation interface with streaming LLM responses
+- Document preview, version comparison, and audit log viewer
 
-### Installation
+### Backend (Next.js API Routes + Server Actions)
+- Designed and implemented all API routes for auth, contracts, signing, users, organizations, and audit
+- Built JWT auth flow with refresh token rotation and **multi-factor authentication** for sensitive operations
+- Implemented **role-based access control** with granular per-organization permissions
+- LLM integration for AI-based contract drafting (natural language → structured clauses)
+- Cryptographically verifiable signature generation and validation
+- Email notification service for signature requests and status changes
+- Audit logging with immutable event trail for every action
 
-1. Clone the repository and install dependencies:
+### Database (PostgreSQL + Prisma)
+- Designed schema from scratch covering: users, organizations, contracts, contract versions, signatures, signing workflows, audit events, templates
+- Modeled complex relations (many-to-many on signers, polymorphic audit events, versioned contract history)
+- Optimized queries with proper indexing for contract search and audit lookups
+- Implemented Prisma migrations and seed scripts
 
-```bash
-npm install
+### Cloud & Deployment (AWS)
+- Set up **AWS S3** for encrypted document storage with proper IAM policies
+- Configured **AWS RDS** PostgreSQL instance with backups and access controls
+- Deployed application infrastructure on **AWS EC2** with environment management
+- Implemented secure file upload with signed URLs and server-side validation
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Framework** | Next.js 14 (App Router — full-stack) |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS, shadcn/ui |
+| **Database** | PostgreSQL (AWS RDS) |
+| **ORM** | Prisma |
+| **File Storage** | AWS S3 (encrypted at rest) |
+| **Compute** | AWS EC2 |
+| **Auth** | JWT + Refresh Tokens + Multi-Factor Authentication |
+| **AI** | LLM integration for contract generation |
+| **Email** | Transactional email service |
+
+### Why Next.js Full-Stack?
+
+Single framework for both client and server gave us:
+- **Single deployment surface** — frontend and backend ship together
+- **Shared TypeScript types** between client and API — fewer integration bugs
+- **Server Actions** for type-safe mutations without REST boilerplate
+- **Native streaming** for AI contract generation responses
+- **Faster iteration** as a solo developer (no separate API repo to maintain)
+
+---
+
+## ✨ Key Features
+
+### Contract Management
+- 🤖 **AI-based contract generation** — natural language prompts → structured contract drafts with editable clauses
+- ✍️ **Real-time collaborative editing** — multiple parties editing simultaneously with conflict resolution
+- 📝 **Template library** — reusable contract templates with variable substitution
+- 🔄 **Version history** — every change tracked with diff views and rollback support
+
+### Signing Workflows
+- 🔐 **Secure multi-party signing** — cryptographically verifiable signatures
+- 📨 **Sequential or parallel signing** — configurable signing orders per contract
+- ✉️ **Email + in-app notifications** for signature requests and status updates
+- 🔍 **Audit trail** — immutable record of every action with timestamps and actor
+
+### Access Control & Security
+- 👥 **Role-based access control (RBAC)** — granular permissions per organization
+- 🔒 **Encrypted document storage** in S3 with signed URL access
+- 📜 **Compliance-ready audit logs** for institutional use
+- 🛡 **Multi-factor authentication** for sensitive operations (signing, role changes)
+
+### Lifecycle Management
+- 📥 Upload, draft, review, sign, archive
+- ⏰ Expiration tracking and renewal reminders
+- 📊 Dashboard for active, pending, and completed contracts
+- 🔍 Full-text search across contract content with filters
+
+---
+
+## 🏛 Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              CLIENT (Next.js App Router)                     │
+│  React Server Components + Client Components                 │
+│  TypeScript + Tailwind + shadcn/ui                           │
+│                                                              │
+│  Routes: /dashboard | /contracts | /sign | /admin | /audit   │
+└──────────────────────────┬───────────────────────────────────┘
+                           │
+                           │  Server Actions + API Routes
+                           │  (shared TypeScript types)
+                           │
+┌──────────────────────────▼───────────────────────────────────┐
+│           NEXT.JS BACKEND (API Routes)                       │
+│                                                              │
+│  Auth Layer    │  JWT + Refresh + MFA + RBAC middleware      │
+│  Contracts     │  CRUD + versioning + collaborative editing  │
+│  Signing       │  Multi-party workflow + crypto signatures   │
+│  AI Service    │  LLM integration for draft generation       │
+│  Audit         │  Immutable event logging                    │
+│  Notifications │  Email service integration                  │
+└──────────┬───────────────┬───────────────┬───────────────────┘
+           │               │               │
+           ▼               ▼               ▼
+   ┌──────────────┐ ┌─────────────┐ ┌──────────────┐
+   │  PostgreSQL  │ │   AWS S3    │ │  External    │
+   │  (AWS RDS)   │ │  Documents  │ │  Services    │
+   │  via Prisma  │ │  (encrypted)│ │  (LLM, Mail) │
+   └──────────────┘ └─────────────┘ └──────────────┘
 ```
 
-2. Set up environment variables:
+---
 
-Create a `.env` file in the root directory:
-
-```bash
-# Database (Get from Supabase)
-DATABASE_URL="postgresql://user:password@host:5432/database?schema=public"
-
-# NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
-
-# SendGrid
-SENDGRID_API_KEY="your-sendgrid-api-key"
-SENDGRID_FROM_EMAIL="noreply@yourdomain.com"
-
-# OpenAI
-OPENAI_API_KEY="your-openai-api-key"
-
-# App URL
-APP_URL="http://localhost:3000"
-```
-
-3. Set up the database:
-
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-4. Run the development server:
-
-```bash
-npm run dev
-```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-mowu-mvp/
-├── app/
-│   ├── api/              # API routes
-│   │   ├── auth/         # Authentication endpoints
-│   │   └── contracts/    # Contract endpoints
-│   ├── auth/             # Auth pages (signin, signup)
-│   ├── dashboard/        # Dashboard page
-│   └── layout.tsx        # Root layout
+/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Auth route group (login, register, mfa)
+│   ├── (dashboard)/              # Authenticated routes
+│   │   ├── contracts/            # Contract management pages
+│   │   ├── sign/                 # Signing workflow pages
+│   │   ├── admin/                # Admin & RBAC pages
+│   │   └── audit/                # Audit log explorer
+│   ├── api/                      # API route handlers
+│   │   ├── auth/                 # Auth endpoints
+│   │   ├── contracts/            # Contract CRUD
+│   │   ├── sign/                 # Signing operations
+│   │   ├── ai/                   # LLM contract generation
+│   │   └── audit/                # Audit queries
+│   └── layout.tsx
+│
 ├── components/
-│   └── dashboard/        # Dashboard components
+│   ├── ui/                       # shadcn/ui base components
+│   ├── contracts/                # Contract editor, viewer, list
+│   ├── signing/                  # Signature capture, signer list
+│   └── admin/                    # User management, RBAC controls
+│
 ├── lib/
-│   ├── auth.ts          # NextAuth configuration
-│   ├── prisma.ts        # Prisma client
-│   └── utils.ts         # Utility functions
+│   ├── auth/                     # JWT, MFA, session utilities
+│   ├── prisma/                   # Prisma client singleton
+│   ├── s3/                       # AWS S3 upload/download helpers
+│   ├── ai/                       # LLM client and prompt templates
+│   ├── audit/                    # Audit event creation helpers
+│   └── crypto/                   # Signature generation & validation
+│
 ├── prisma/
-│   └── schema.prisma    # Database schema
-└── types/               # TypeScript types
+│   ├── schema.prisma             # Database schema
+│   ├── migrations/               # Migration history
+│   └── seed.ts                   # Seed data
+│
+└── types/                        # Shared TypeScript types
 ```
 
-## Database Schema
+---
 
-The application uses the following main models:
+## 🔒 Security Highlights
 
-- **User**: User accounts with email/password authentication
-- **Contract**: Contract documents with status tracking
-- **Signature**: Digital signatures for contracts
-- **PasswordResetToken**: Tokens for password reset functionality
+- **Encryption at rest** — documents stored encrypted in S3
+- **Signed URLs** for document access (time-limited, scoped)
+- **JWT + refresh token rotation** with proper expiry
+- **Multi-factor authentication** for high-stakes operations
+- **Audit trail** for every action — actor, timestamp, IP, change details
+- **RBAC enforcement** at both API and UI layers (defense in depth)
+- **Input validation** with Zod schemas on every API route
+- **Rate limiting** on auth and signing endpoints
 
-## API Endpoints
+---
 
-### Authentication
+## ⚖️ Why This Project Matters
 
-- `POST /api/auth/signup` - Create new user account
-- `POST /api/auth/signin` - Sign in (handled by NextAuth)
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password with token
+Building infrastructure for government/institutional use has uniquely high requirements:
+- **Security** — handling legally-binding documents
+- **Auditability** — every action must be reviewable years later
+- **Reliability** — downtime affects state operations
+- **Accessibility** — must work for non-technical users
 
-### Contracts
+This project taught me how to architect for those constraints — not just startup speed.
 
-- `GET /api/contracts` - Get all contracts for logged-in user
-- `POST /api/contracts` - Create new contract
-- `GET /api/contracts/[id]` - Get specific contract
-- `DELETE /api/contracts/[id]` - Delete contract (draft only)
-- `POST /api/contracts/[id]/send` - Send contract to receiver
+---
 
-## Next Steps
+## 📝 Note on this Repository
 
-1. **Connect to Supabase**: Update the `DATABASE_URL` in your `.env` file with your Supabase connection string
-2. **Configure SendGrid**: Add your SendGrid API key and verified sender email
-3. **Add OpenAI Integration**: Implement AI contract generation in the workflow
-4. **File Upload**: Implement file upload to AWS S3 or similar storage
-5. **PDF Generation**: Add PDF generation and signature embedding
-6. **Signature Component**: Integrate a signature pad library
+This is a **client project for the Lagos State market**, currently in **pre-launch pilot phase** — built but not yet in active government deployment. The Vercel link above hosts a working demo of the platform. This repository is shared as a portfolio reference to demonstrate full-stack architecture and design decisions.
 
-## Deployment
+For demo credentials or technical walkthroughs, please contact me directly.
 
-### Vercel Deployment
+---
 
-1. Push your code to GitHub
-2. Import the repository in Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy
+## 🤝 Connect
 
-## Contributing
+- 💼 **LinkedIn:** [muhammad-mudassar776](https://www.linkedin.com/in/muhammad-mudassar776/)
+- 🌐 **Portfolio:** [mmudassar.vercel.app](https://mmudassar.vercel.app/)
+- 📧 **Email:** mudassarmuhammad776@gmail.com
 
-This is an MVP project. Feel free to extend and customize as needed.
+---
 
-## License
+*Built end-to-end — frontend, backend, database design, and AWS deployment.*
 
-MIT
+<img width="1200" height="558" alt="logos-digital-signature" src="https://github.com/user-attachments/assets/7bcf6f93-cda4-46f2-9ed6-6b33bbc0f454" />
